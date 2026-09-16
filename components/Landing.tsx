@@ -1,6 +1,11 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import {
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./Landing.module.scss";
 import {
@@ -21,10 +26,9 @@ import {
   TAILORED_KEYWORDS,
 } from "@/lib/landingData";
 
-/** Google is the only sign-in path in this app; every CTA on the marketing
- * page routes through the same call instead of re-implementing the flow. */
-function beginSignIn() {
-  void signIn("google", { callbackUrl: "/" });
+/** Marketing CTAs open Clerk sign-up so first-time visitors can create an account. */
+function beginSignUp() {
+  window.location.assign("/sign-up");
 }
 
 const RING_CIRCUMFERENCE = 113;
@@ -128,20 +132,27 @@ function SiteHeader() {
           ))}
         </div>
         <div className={styles.navActions}>
-          <button
-            type="button"
-            onClick={beginSignIn}
-            className={`${styles.pill} ${styles.pillOutline}`}
-          >
-            Log in
-          </button>
-          <button
-            type="button"
-            onClick={beginSignIn}
-            className={`${styles.pill} ${styles.pillAccent}`}
-          >
-            {CTA_LABEL}
-          </button>
+          <Show when="signed-out">
+            <SignInButton mode="modal" forceRedirectUrl="/">
+              <button
+                type="button"
+                className={`${styles.pill} ${styles.pillOutline}`}
+              >
+                Log in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal" forceRedirectUrl="/">
+              <button
+                type="button"
+                className={`${styles.pill} ${styles.pillAccent}`}
+              >
+                {CTA_LABEL}
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
         </div>
       </nav>
     </header>
@@ -171,7 +182,7 @@ function Hero() {
         <div {...reveal(180)} className={styles.heroActions}>
           <button
             type="button"
-            onClick={beginSignIn}
+            onClick={beginSignUp}
             className={`${styles.pill} ${styles.pillAccent} ${styles.ctaPrimary}`}
           >
             {CTA_LABEL} <span>→</span>
@@ -681,7 +692,7 @@ function Pricing() {
             </div>
             <button
               type="button"
-              onClick={beginSignIn}
+              onClick={beginSignUp}
               className={`${styles.pill} ${styles.pillAccent} ${styles.planCta}`}
             >
               {plan.cta}
@@ -774,7 +785,7 @@ function FinalCta() {
               />
               <button
                 type="button"
-                onClick={beginSignIn}
+                onClick={beginSignUp}
                 className={styles.ctaSubmit}
               >
                 {CTA_LABEL}

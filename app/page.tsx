@@ -1,11 +1,13 @@
 import Dashboard from "@/components/Dashboard";
 import Landing from "@/components/Landing";
-import { userLoggedIn } from "@/lib/session";
+import { getAppUser } from "@/lib/session";
 
-export default function Home() {
-  if (!userLoggedIn) {
+export default async function Home() {
+  const user = await getAppUser();
+
+  if (!user) {
     return <Landing />;
   }
 
-  return <Dashboard />;
+  return <Dashboard user={user} />;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { SignOutButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -8,7 +9,7 @@ import {
   type TailoringSession,
 } from "@/lib/dashboardData";
 import { PROFILE_COMPLETION } from "@/lib/profileData";
-import { currentUser } from "@/lib/session";
+import type { AppUser } from "@/lib/session";
 import styles from "./Dashboard.module.scss";
 
 const TABS = ["What changed", "Tailored CV", "Cover letter", "Job post"] as const;
@@ -18,7 +19,7 @@ const SESSION_GROUPS = [
   { label: "Earlier this week", sessions: TAILORING_SESSIONS.slice(2) },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({ user }: { user: AppUser }) {
   const [activeSessionId, setActiveSessionId] = useState(
     TAILORING_SESSIONS[0].id
   );
@@ -36,6 +37,7 @@ export default function Dashboard() {
   return (
     <div className={styles.page}>
       <DashboardSidebar
+        user={user}
         activeSessionId={activeSessionId}
         onSelect={selectSession}
       />
@@ -48,7 +50,9 @@ export default function Dashboard() {
           <div className={styles.grid}>
             <div className={styles.column}>
               {activeTab === 0 && <WhatChangedPanel session={session} />}
-              {activeTab === 1 && <TailoredCvPanel session={session} />}
+              {activeTab === 1 && (
+                <TailoredCvPanel session={session} user={user} />
+              )}
               {activeTab === 2 && <CoverLetterPanel session={session} />}
               {activeTab === 3 && <JobPostPanel session={session} />}
             </div>
@@ -68,9 +72,11 @@ export default function Dashboard() {
 }
 
 function DashboardSidebar({
+  user,
   activeSessionId,
   onSelect,
 }: {
+  user: AppUser;
   activeSessionId: string;
   onSelect: (id: string) => void;
 }) {
@@ -128,17 +134,20 @@ function DashboardSidebar({
             <div className={styles.planFill} style={{ width: "64%" }} />
           </div>
         </div>
-        <Link href="/profile" className={styles.profileLink}>
-          <span className={styles.profileAvatar} aria-hidden="true">
-            {currentUser.initials}
-          </span>
-          <span className={styles.profileText}>
-            {currentUser.name}
+        <div className={styles.profileLink}>
+          <UserButton />
+          <Link href="/profile" className={styles.profileText}>
+            {user.name}
             <span className={styles.profileMeta}>
               Career record {PROFILE_COMPLETION}%
             </span>
-          </span>
-        </Link>
+          </Link>
+        </div>
+        <SignOutButton redirectUrl="/">
+          <button type="button" className={styles.signOutButton}>
+            Sign out
+          </button>
+        </SignOutButton>
       </div>
     </aside>
   );
@@ -230,12 +239,18 @@ function WhatChangedPanel({ session }: { session: TailoringSession }) {
   );
 }
 
-function TailoredCvPanel({ session }: { session: TailoringSession }) {
+function TailoredCvPanel({
+  session,
+  user,
+}: {
+  session: TailoringSession;
+  user: AppUser;
+}) {
   return (
     <div className={`${styles.panel} ${styles.cvPanel}`}>
-      <p className={styles.cvName}>{currentUser.name}</p>
+      <p className={styles.cvName}>{user.name}</p>
       <p className={styles.cvMeta}>
-        {session.title} · London · {currentUser.email}
+        {session.title} · London · {user.email}
       </p>
       <hr className={styles.cvDivider} />
       <p className={styles.cvSectionLabel}>Summary</p>
