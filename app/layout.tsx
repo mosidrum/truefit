@@ -1,6 +1,6 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter, Newsreader, Source_Sans_3 } from "next/font/google";
-import Providers from "@/components/Providers";
 import "./globals.scss";
 
 const newsreader = Newsreader({
@@ -37,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${newsreader.variable} ${sourceSans.variable} ${inter.variable}`}
     >
       <body>
-        <Providers>{children}</Providers>
+        <ClerkProvider>{children}</ClerkProvider>
       </body>
     </html>
   );
