@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: truefit-postgres
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: truefit
+      POSTGRES_PASSWORD: truefit
+      POSTGRES_DB: truefit
+    volumes:
+      - truefit_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U truefit -d truefit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  truefit_pg_data:
