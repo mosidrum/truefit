@@ -37,9 +37,16 @@ yarn-error.log*
 .env*
 !.env.example
 
+# local sqlite
+/prisma/*.db
+/prisma/*.db-journal
+*.db
+*.db-journal
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.clerk/
