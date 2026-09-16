@@ -1,0 +1,20 @@
+.app {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    border: 0;
+    background: var(--color-overlay);
+  }
+}
