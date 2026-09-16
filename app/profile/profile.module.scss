@@ -1,179 +1,616 @@
+// Career record profile — dark "Nocturne" theme, scoped entirely under
+// .page so these tokens never leak into the app's own light theme
+// (app/globals.scss). Same palette as Landing.module.scss and
+// Dashboard.module.scss, applied to the profile surface.
+
 .page {
-  min-height: 100dvh;
-  background: var(--color-bg);
+  --color-bg: #0d1210;
+  --color-surface: #151d18;
+  --color-text: #e9efe9;
+  --color-accent: #5ce276;
+  --color-accent-100: #eafdee;
+  --color-accent-200: #c9f8d4;
+  --color-accent-300: #9cefb0;
+  --color-accent-400: #6fe58c;
+  --color-accent-500: #3fd468;
+  --color-accent-600: #2bb152;
+  --color-accent-700: #1f8a40;
+  --color-accent-800: #17602e;
+  --color-accent-900: #10401f;
+  --color-divider: color-mix(in srgb, #e9efe9 16%, transparent);
+  --shadow-sm: 0 0 0 1px #2a3430;
+  --font-app: var(--font-inter), "Inter", system-ui, sans-serif;
+
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  background: radial-gradient(80% 55% at 85% -10%, #16291d 0%, #0d1210 58%);
+  color: var(--color-text);
+  font-family: var(--font-app);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
 }
 
-.header {
+.page button {
+  font-family: inherit;
+}
+
+// ── Sidebar ──────────────────────────────────────────────────────────────
+
+.sidebar {
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  max-width: 720px;
-  margin: 0 auto;
-  padding: var(--space-5);
+  flex-direction: column;
+  gap: 18px;
+  width: clamp(190px, 21vw, 272px);
+  flex-shrink: 0;
+  padding: 18px 14px;
+  background: #0b100e;
+  border-right: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
 }
 
 .brand {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 6px 0;
+  color: var(--color-text);
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--color-accent);
+  color: #08170c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.brandName {
+  font-size: 17px;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
-.back {
-  margin-left: auto;
-  color: var(--color-text-secondary);
-  font-size: 0.9375rem;
+.nav {
+  display: grid;
+  gap: 2px;
 }
 
-.back:hover {
-  color: var(--color-primary);
-}
-
-.avatar,
-.avatarLarge {
-  display: inline-flex;
-  flex-shrink: 0;
+.navItem {
+  display: grid;
+  grid-template-columns: 2px 1fr;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: var(--color-primary-text);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  padding: 10px;
+  border-radius: 9px;
+  color: var(--color-text);
+  font-size: 13px;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  font-size: 0.75rem;
+a.navItem:hover {
+  background: color-mix(in srgb, #e9efe9 6%, transparent);
 }
 
-.avatarLarge {
-  width: 64px;
-  height: 64px;
-  font-size: 1.125rem;
+.navRail {
+  align-self: stretch;
+  border-radius: 2px;
+  background: transparent;
 }
+
+.navItemCurrent {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent-200);
+}
+
+.navItemCurrent .navRail {
+  background: var(--color-accent);
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding: 12px;
+  border-radius: 11px;
+  background: #111814;
+  box-shadow: var(--shadow-sm);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: color-mix(in srgb, #e9efe9 62%, transparent);
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────
 
 .main {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 var(--space-5) var(--space-8);
-}
-
-.identity {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-6);
-  padding: var(--space-5);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  flex-direction: column;
 }
 
-.identity h1 {
-  font-family: var(--font-serif);
-  font-size: 1.75rem;
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px clamp(16px, 2.6vw, 34px);
+  border-bottom: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
+}
+
+.headerText {
+  margin-right: auto;
+  min-width: 0;
+}
+
+.kicker {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #e9efe9 50%, transparent);
+}
+
+.title {
+  margin: 3px 0 0;
+  font-size: clamp(17px, 2vw, 22px);
   font-weight: 500;
   letter-spacing: -0.02em;
 }
 
-.email {
-  color: var(--color-text-secondary);
+.importButton {
+  padding: 9px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13px;
 }
 
-.cvs {
-  padding: var(--space-5);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+.importButton:hover {
+  background: color-mix(in srgb, #e9efe9 7%, transparent);
 }
 
-.cvHead {
+.saveButton {
+  padding: 9px 16px;
+  border-radius: 9px;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.saveButton:hover {
+  background: color-mix(in srgb, var(--color-accent) 13%, transparent);
+}
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: clamp(18px, 2.8vw, 34px);
+  display: grid;
+  gap: clamp(16px, 2.4vw, 26px);
+  align-content: start;
+}
+
+// ── Identity + completion ────────────────────────────────────────────────
+
+.topGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: clamp(16px, 2.4vw, 26px);
+  align-items: stretch;
+}
+
+.identityCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  padding: clamp(20px, 2.6vw, 28px);
+  border-radius: 16px;
+  background: linear-gradient(160deg, #17241c, #101711);
+  box-shadow: var(--shadow-sm);
+}
+
+.identityAvatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  background: linear-gradient(140deg, #2bb152, #17602e);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.identityText {
+  min-width: 0;
+}
+
+.identityName {
+  font-size: clamp(20px, 2.3vw, 26px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.identityHeadline {
+  font-size: 13.5px;
+  color: color-mix(in srgb, #e9efe9 66%, transparent);
+  margin-top: 5px;
+}
+
+.identityTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.identityTag {
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--color-divider);
+}
+
+.identityTagAccent {
+  border-color: transparent;
+  background: var(--color-accent-900);
+  color: var(--color-accent-200);
+}
+
+.completionCard {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  gap: 18px;
+  padding: clamp(20px, 2.6vw, 28px);
+  border-radius: 16px;
+  background: #131a16;
+  box-shadow: var(--shadow-sm);
 }
 
-.cvHead h2 {
-  font-size: 1.125rem;
+.completionRing {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  transform: rotate(-90deg);
 }
 
-.upload {
+.completionRingTrack {
+  fill: none;
+  stroke: #223028;
+  stroke-width: 7;
+}
+
+.completionRingProgress {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.completionText {
+  min-width: 0;
+}
+
+.completionValue {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.completionNote {
+  font-size: 12.5px;
+  color: color-mix(in srgb, #e9efe9 64%, transparent);
+  margin-top: 6px;
+  text-wrap: pretty;
+}
+
+.completionLink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--color-accent);
+}
+
+.completionLink:hover {
+  color: var(--color-accent-300);
+}
+
+// ── Experience + side stack ──────────────────────────────────────────────
+
+.experienceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(16px, 2.4vw, 26px);
+  align-items: start;
+}
+
+.experience {
+  min-width: 0;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.sectionHint {
+  font-size: 12px;
+  color: color-mix(in srgb, #e9efe9 58%, transparent);
+}
+
+.roleRow {
+  padding: 16px 0;
+}
+
+.roleRow + .roleRow {
+  border-top: 1px solid color-mix(in srgb, #e9efe9 13%, transparent);
+}
+
+.roleToggle {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.roleToggle:hover {
+  color: var(--color-accent-200);
+}
+
+.roleText {
+  min-width: 0;
+}
+
+.roleTitle {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.roleMeta {
+  display: block;
+  font-size: 12.5px;
+  color: color-mix(in srgb, #e9efe9 60%, transparent);
+  margin-top: 4px;
+}
+
+.roleFlag {
+  font-size: 11.5px;
+  color: color-mix(in srgb, #e9efe9 62%, transparent);
+  white-space: nowrap;
+  padding-top: 3px;
+}
+
+.roleFlagComplete {
+  color: var(--color-accent-300);
+}
+
+.bulletList {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.bulletRow {
+  display: grid;
+  grid-template-columns: 2px 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.bulletRail {
+  align-self: stretch;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+.bulletText {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
+  text-wrap: pretty;
+}
+
+.bulletUsed {
+  font-size: 11px;
+  color: color-mix(in srgb, #e9efe9 55%, transparent);
+  white-space: nowrap;
+}
+
+.addBulletButton {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.addBulletButton:hover {
+  background: color-mix(in srgb, #e9efe9 7%, transparent);
+}
+
+.sideStack {
+  min-width: 0;
+  display: grid;
+  gap: clamp(14px, 2vw, 20px);
+  align-content: start;
+}
+
+.sideCard {
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #131a16;
+  box-shadow: var(--shadow-sm);
+}
+
+.sideLabel {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #e9efe9 52%, transparent);
+  margin-bottom: 12px;
+}
+
+.skillChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.skillChip {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 8px 14px;
-  border: 0;
-  border-radius: var(--radius);
-  background: var(--color-primary);
-  color: var(--color-primary-text);
-  font-weight: 600;
-  cursor: pointer;
+  gap: 6px;
+  font-size: 11.5px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  background: var(--color-accent-900);
+  color: var(--color-accent-200);
 }
 
-.upload:hover {
-  background: var(--color-primary-hover);
+.skillCount {
+  color: color-mix(in srgb, #c9f8d4 65%, transparent);
 }
 
-.upload:focus-within {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
+.sideNote {
+  font-size: 12px;
+  color: color-mix(in srgb, #e9efe9 58%, transparent);
+  margin-top: 12px;
+  line-height: 1.55;
 }
 
-.list {
+.toneRow {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  list-style: none;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.card {
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-bg);
+.toneButton {
+  padding: 8px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12.5px;
+  transition: background 0.22s ease;
 }
 
-.cvName {
-  font-weight: 600;
+.toneButton:hover {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
 }
 
-.cvMeta {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
+.toneButtonActive {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent-200);
 }
 
-.empty {
-  padding: var(--space-7) var(--space-4);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-mist);
-  text-align: center;
+.docList {
+  display: grid;
+  gap: 8px;
 }
 
-.emptyTitle {
-  margin-bottom: var(--space-2);
-  font-family: var(--font-serif);
-  font-size: 1.25rem;
+.docRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #0f1512;
+  border: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
 }
 
-.emptyCopy {
-  margin-bottom: var(--space-4);
-  color: var(--color-text-secondary);
+.docText {
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (max-width: 520px) {
-  .header,
-  .main {
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
+.docMeta {
+  display: block;
+  font-size: 11px;
+  color: color-mix(in srgb, #e9efe9 55%, transparent);
+  margin-top: 3px;
+}
+
+.docOpen {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--color-accent);
+}
+
+.docOpen:hover {
+  color: var(--color-accent-300);
+}
+
+.privacyText {
+  font-size: 13px;
+  line-height: 1.55;
+  color: color-mix(in srgb, #e9efe9 74%, transparent);
+  text-wrap: pretty;
+}
+
+.deleteButton {
+  margin-top: 14px;
+  padding: 8px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12.5px;
+}
+
+.deleteButton:hover {
+  background: color-mix(in srgb, #e9efe9 7%, transparent);
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────
+
+@media (max-width: 640px) {
+  .page {
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
   }
 
-  .identity {
-    align-items: flex-start;
+  .sidebar {
+    width: 100%;
+  }
+
+  .identityCard,
+  .completionCard {
     flex-direction: column;
+    align-items: flex-start;
   }
 }
