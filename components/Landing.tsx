@@ -117,42 +117,67 @@ export default function Landing() {
 }
 
 function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  const closeMenu = () => setOpen(false);
+
   return (
     <header className={styles.header}>
       <nav className={styles.nav}>
-        <a href="#top" className={styles.brand}>
+        <a href="#top" className={styles.brand} onClick={closeMenu}>
           <span className={styles.brandMark}>T</span>
           <span className={styles.brandName}>truefit</span>
         </a>
-        <div className={styles.navLinks}>
-          {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className={styles.navLink}>
-              {link.label}
-            </a>
-          ))}
-        </div>
-        <div className={styles.navActions}>
-          <Show when="signed-out">
-            <SignInButton mode="modal" forceRedirectUrl="/">
-              <button
-                type="button"
-                className={`${styles.pill} ${styles.pillOutline}`}
+
+        <button
+          type="button"
+          className={styles.navToggle}
+          aria-expanded={open}
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className={styles.navToggleBar} />
+          <span className={styles.navToggleBar} />
+          <span className={styles.navToggleBar} />
+        </button>
+
+        <div className={`${styles.navMenu} ${open ? styles.navMenuOpen : ""}`}>
+          <div className={styles.navLinks}>
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className={styles.navLink}
+                onClick={closeMenu}
               >
-                Log in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal" forceRedirectUrl="/">
-              <button
-                type="button"
-                className={`${styles.pill} ${styles.pillAccent}`}
-              >
-                {CTA_LABEL}
-              </button>
-            </SignUpButton>
-          </Show>
-          <Show when="signed-in">
-            <UserButton />
-          </Show>
+                {link.label}
+              </a>
+            ))}
+          </div>
+          <div className={styles.navActions}>
+            <Show when="signed-out">
+              <SignInButton mode="modal" forceRedirectUrl="/">
+                <button
+                  type="button"
+                  className={`${styles.pill} ${styles.pillOutline}`}
+                  onClick={closeMenu}
+                >
+                  Log in
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal" forceRedirectUrl="/">
+                <button
+                  type="button"
+                  className={`${styles.pill} ${styles.pillAccent}`}
+                  onClick={closeMenu}
+                >
+                  {CTA_LABEL}
+                </button>
+              </SignUpButton>
+            </Show>
+            <Show when="signed-in">
+              <UserButton />
+            </Show>
+          </div>
         </div>
       </nav>
     </header>

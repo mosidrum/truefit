@@ -35,116 +35,6 @@
   font-family: inherit;
 }
 
-// ── Sidebar ──────────────────────────────────────────────────────────────
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  width: clamp(190px, 21vw, 272px);
-  flex-shrink: 0;
-  padding: 18px 14px;
-  background: #0b100e;
-  border-right: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 4px 6px 0;
-  color: var(--color-text);
-}
-
-.brandMark {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background: var(--color-accent);
-  color: #08170c;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.brandName {
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-}
-
-.nav {
-  display: grid;
-  gap: 2px;
-}
-
-.navItem {
-  display: grid;
-  grid-template-columns: 2px 1fr;
-  gap: 10px;
-  align-items: center;
-  padding: 10px;
-  border-radius: 9px;
-  color: var(--color-text);
-  font-size: 13px;
-}
-
-a.navItem:hover {
-  background: color-mix(in srgb, #e9efe9 6%, transparent);
-}
-
-.navRail {
-  align-self: stretch;
-  border-radius: 2px;
-  background: transparent;
-}
-
-.navItemCurrent {
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
-  color: var(--color-accent-200);
-}
-
-.navItemCurrent .navRail {
-  background: var(--color-accent);
-}
-
-.sidebarFooter {
-  margin-top: auto;
-  display: grid;
-  gap: 10px;
-}
-
-.sidebarFooterNote {
-  margin: 0;
-  padding: 12px;
-  border-radius: 11px;
-  background: #111814;
-  box-shadow: var(--shadow-sm);
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: color-mix(in srgb, #e9efe9 62%, transparent);
-}
-
-.signOutButton {
-  width: 100%;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: color-mix(in srgb, #e9efe9 62%, transparent);
-  font: inherit;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.22s ease, color 0.22s ease;
-}
-
-.signOutButton:hover {
-  background: color-mix(in srgb, #e9efe9 6%, transparent);
-  color: var(--color-text);
-}
-
 // ── Main ─────────────────────────────────────────────────────────────────
 
 .main {
@@ -163,6 +53,19 @@ a.navItem:hover {
   gap: 12px;
   padding: 16px clamp(16px, 2.6vw, 34px);
   border-bottom: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: color-mix(in srgb, #e9efe9 68%, transparent);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--color-accent);
 }
 
 .headerText {
@@ -215,6 +118,9 @@ a.navItem:hover {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
   padding: clamp(18px, 2.8vw, 34px);
   display: grid;
   gap: clamp(16px, 2.4vw, 26px);
@@ -557,23 +463,61 @@ a.navItem:hover {
   color: var(--color-accent-200);
 }
 
+.docHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.docSelectAll {
+  font-size: 11px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.docSelectAll:hover {
+  color: var(--color-accent-300);
+}
+
 .docList {
   display: grid;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .docRow {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
+  display: flex;
   align-items: center;
-  padding: 11px 13px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 13px;
   border-radius: 10px;
   background: #0f1512;
   border: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
 }
 
+.docRowLabel {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.docCheckbox {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
 .docText {
+  display: block;
   min-width: 0;
   font-size: 13px;
   line-height: 1.35;
@@ -582,21 +526,47 @@ a.navItem:hover {
   white-space: nowrap;
 }
 
-.docMeta {
-  display: block;
-  font-size: 11px;
+.docRemove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
   color: color-mix(in srgb, #e9efe9 55%, transparent);
-  margin-top: 3px;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.docOpen {
-  font-size: 12px;
+.docRemove:hover {
+  background: color-mix(in srgb, #f2a0a0 16%, transparent);
+  color: #f2a0a0;
+}
+
+.docUploadInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-  color: var(--color-accent);
+  border: 0;
 }
 
-.docOpen:hover {
+.uploadStatus {
+  margin: 10px 0 0;
+  font-size: 12px;
   color: var(--color-accent-300);
+}
+
+.uploadStatusError {
+  color: #f2a0a0;
 }
 
 .privacyText {
@@ -627,10 +597,6 @@ a.navItem:hover {
     flex-direction: column;
     height: auto;
     min-height: 100dvh;
-  }
-
-  .sidebar {
-    width: 100%;
   }
 
   .identityCard,
