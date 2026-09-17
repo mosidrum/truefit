@@ -2,83 +2,135 @@
 
 import { SignOutButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import {
-  SCORE_RING_CIRCUMFERENCE,
-  TAILORING_SESSIONS,
-  type TailoringSession,
-} from "@/lib/dashboardData";
-import { PROFILE_COMPLETION } from "@/lib/profileData";
+import { useState } from "react";
+import type { JobSummary } from "@/lib/jobs";
 import type { AppUser } from "@/lib/session";
 import styles from "./Dashboard.module.scss";
 
 const TABS = ["What changed", "Tailored CV", "Cover letter", "Job post"] as const;
 
-const SESSION_GROUPS = [
-  { label: "Today", sessions: TAILORING_SESSIONS.slice(0, 2) },
-  { label: "Earlier this week", sessions: TAILORING_SESSIONS.slice(2) },
-];
+/** Best available label for a job: parsed title, else parsed company, else the URL's host. */
+function jobTitle(job: JobSummary): string {
+  if (job.parsedTitle) return job.parsedTitle;
+  if (job.parsedCompany) return job.parsedCompany;
+  try {
+    return new URL(job.sourceUrl).hostname;
+  } catch {
+    return job.sourceUrl;
+  }
+}
 
-export default function Dashboard({ user }: { user: AppUser }) {
-  const [activeSessionId, setActiveSessionId] = useState(
-    TAILORING_SESSIONS[0].id
-  );
+/** Only shown as a subtitle when both title and company were actually extracted. */
+function jobCompany(job: JobSummary): string | null {
+  return job.parsedTitle && job.parsedCompany ? job.parsedCompany : null;
+}
+
+export default function Dashboard({
+  user,
+  completion,
+  jobs: initialJobs,
+}: {
+  user: AppUser;
+  completion: number;
+  jobs: JobSummary[];
+}) {
+  const [jobs, setJobs] = useState<JobSummary[]>(initialJobs);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
 
-  const session =
-    TAILORING_SESSIONS.find((s) => s.id === activeSessionId) ??
-    TAILORING_SESSIONS[0];
+  const session = activeSessionId
+    ? (jobs.find((j) => j.id === activeSessionId) ?? null)
+    : null;
 
   function selectSession(id: string) {
     setActiveSessionId(id);
     setActiveTab(0);
   }
 
+  function startNewTailor() {
+    setActiveSessionId(null);
+    setActiveTab(0);
+  }
+
+  function handleJobSaved(job: JobSummary) {
+    setJobs((prev) => [job, ...prev.filter((j) => j.id !== job.id)]);
+    setActiveSessionId(job.id);
+    setActiveTab(0);
+  }
+
   return (
     <div className={styles.page}>
+      <AccountBadge user={user} completion={completion} />
+
       <DashboardSidebar
-        user={user}
+        jobs={jobs}
         activeSessionId={activeSessionId}
         onSelect={selectSession}
+        onNewTailor={startNewTailor}
       />
 
       <main className={styles.main}>
-        <WorkspaceHeader session={session} />
-        <TabsNav activeTab={activeTab} onSelect={setActiveTab} />
+        {session ? (
+          <>
+            <WorkspaceHeader session={session} />
+            <TabsNav activeTab={activeTab} onSelect={setActiveTab} />
 
-        <div className={styles.scrollArea}>
-          <div className={styles.grid}>
-            <div className={styles.column}>
-              {activeTab === 0 && <WhatChangedPanel session={session} />}
-              {activeTab === 1 && (
-                <TailoredCvPanel session={session} user={user} />
-              )}
-              {activeTab === 2 && <CoverLetterPanel session={session} />}
-              {activeTab === 3 && <JobPostPanel session={session} />}
+            <div className={styles.scrollArea}>
+              <div className={styles.grid}>
+                <div className={styles.column}>
+                  {activeTab === 0 && <NotGeneratedPanel label="What changed" />}
+                  {activeTab === 1 && <NotGeneratedPanel label="Tailored CV" />}
+                  {activeTab === 2 && <NotGeneratedPanel label="Cover letter" />}
+                  {activeTab === 3 && <JobPostPanel session={session} />}
+                </div>
+
+                <InsightsAside />
+              </div>
             </div>
-
-            <aside className={styles.side}>
-              <ScoreCard key={session.id} session={session} />
-              <KeywordsCard session={session} />
-              <GapCard session={session} />
-            </aside>
-          </div>
-        </div>
-
-        <ComposeBar />
+          </>
+        ) : (
+          <DraftState onSaved={handleJobSaved} />
+        )}
       </main>
     </div>
   );
 }
 
-function DashboardSidebar({
+function AccountBadge({
   user,
-  activeSessionId,
-  onSelect,
+  completion,
 }: {
   user: AppUser;
-  activeSessionId: string;
+  completion: number;
+}) {
+  return (
+    <div className={styles.accountBadge}>
+      <UserButton />
+      <Link href="/profile" className={styles.profileText}>
+        {user.name}
+        <span className={styles.profileMeta}>
+          Career record {completion}%
+        </span>
+      </Link>
+      <SignOutButton redirectUrl="/">
+        <button type="button" className={styles.signOutButton}>
+          Sign out
+        </button>
+      </SignOutButton>
+    </div>
+  );
+}
+
+function DashboardSidebar({
+  jobs,
+  activeSessionId,
+  onSelect,
+  onNewTailor,
+}: {
+  jobs: JobSummary[];
+  activeSessionId: string | null;
   onSelect: (id: string) => void;
+  onNewTailor: () => void;
 }) {
   return (
     <aside className={styles.sidebar}>
@@ -87,83 +139,63 @@ function DashboardSidebar({
         <span className={styles.brandName}>truefit</span>
       </Link>
 
-      <button type="button" className={styles.newTailor}>
+      <button type="button" className={styles.newTailor} onClick={onNewTailor}>
         New tailor <span aria-hidden="true">＋</span>
       </button>
 
       <nav className={styles.sessionNav} aria-label="Tailoring sessions">
-        {SESSION_GROUPS.map((group) => (
-          <div key={group.label} className={styles.sessionGroup}>
-            <p className={styles.groupLabel}>{group.label}</p>
+        <div className={styles.sessionGroup}>
+          <p className={styles.groupLabel}>History</p>
+          {jobs.length === 0 ? (
+            <p className={styles.sessionEmpty}>
+              No tailoring sessions yet — paste a job URL to start one.
+            </p>
+          ) : (
             <ul className={styles.sessionList}>
-              {group.sessions.map((session) => {
-                const isActive = session.id === activeSessionId;
+              {jobs.map((job) => {
+                const isActive = job.id === activeSessionId;
+                const company = jobCompany(job);
                 return (
-                  <li key={session.id}>
+                  <li key={job.id}>
                     <button
                       type="button"
                       aria-current={isActive ? true : undefined}
                       className={`${styles.sessionButton} ${
                         isActive ? styles.sessionButtonActive : ""
                       }`}
-                      onClick={() => onSelect(session.id)}
+                      onClick={() => onSelect(job.id)}
                     >
                       <span className={styles.sessionRail} aria-hidden="true" />
                       <span className={styles.sessionText}>
-                        {session.title}
-                        <span className={styles.sessionCompany}>
-                          {session.company}
-                        </span>
-                      </span>
-                      <span className={styles.sessionScore}>
-                        {session.score}%
+                        {jobTitle(job)}
+                        {company && (
+                          <span className={styles.sessionCompany}>{company}</span>
+                        )}
                       </span>
                     </button>
                   </li>
                 );
               })}
             </ul>
-          </div>
-        ))}
+          )}
+        </div>
       </nav>
-
-      <div className={styles.sidebarFooter}>
-        <div className={styles.planCard}>
-          <p className={styles.planLabel}>Pro · 41 of ∞ tailors</p>
-          <div className={styles.planTrack}>
-            <div className={styles.planFill} style={{ width: "64%" }} />
-          </div>
-        </div>
-        <div className={styles.profileLink}>
-          <UserButton />
-          <Link href="/profile" className={styles.profileText}>
-            {user.name}
-            <span className={styles.profileMeta}>
-              Career record {PROFILE_COMPLETION}%
-            </span>
-          </Link>
-        </div>
-        <SignOutButton redirectUrl="/">
-          <button type="button" className={styles.signOutButton}>
-            Sign out
-          </button>
-        </SignOutButton>
-      </div>
     </aside>
   );
 }
 
-function WorkspaceHeader({ session }: { session: TailoringSession }) {
+function WorkspaceHeader({ session }: { session: JobSummary }) {
+  const company = jobCompany(session);
   return (
     <header className={styles.header}>
       <div className={styles.headerText}>
         <p className={styles.kicker}>Tailoring</p>
         <h1 className={styles.title}>
-          {session.title}{" "}
-          <span className={styles.company}>· {session.company}</span>
+          {jobTitle(session)}{" "}
+          {company && <span className={styles.company}>· {company}</span>}
         </h1>
       </div>
-      <span className={styles.statusPill}>{session.status}</span>
+      <span className={styles.statusPill}>Saved</span>
       <button type="button" className={styles.shareButton}>
         Share
       </button>
@@ -200,223 +232,148 @@ function TabsNav({
   );
 }
 
-function WhatChangedPanel({ session }: { session: TailoringSession }) {
+function NotGeneratedPanel({ label }: { label: string }) {
   return (
     <div className={styles.panel}>
       <div className={styles.panelHead}>
-        <h2 className={styles.panelTitle}>What changed</h2>
-        <span className={styles.panelNote}>{session.changed}</span>
+        <h2 className={styles.panelTitle}>{label}</h2>
       </div>
-      {session.diffs.map((diff) => (
-        <div key={diff.num} className={styles.diffRow}>
-          <span className={styles.diffNum}>{diff.num}</span>
-          <div className={styles.diffBody}>
-            <p className={styles.diffBefore}>{diff.before}</p>
-            <div className={styles.diffAfterRow}>
-              <span className={styles.diffBar} aria-hidden="true" />
-              <div className={styles.diffAfterCol}>
-                <p className={styles.diffAfter}>{diff.after}</p>
-                <div className={styles.diffFootnote}>
-                  <span>Source · {diff.source}</span>
-                  <span className={styles.diffMatch}>
-                    Matches · {diff.match}
-                  </span>
-                </div>
-                <div className={styles.diffActions}>
-                  <button type="button" className={styles.keepButton}>
-                    Keep
-                  </button>
-                  <button type="button" className={styles.revertButton}>
-                    Revert
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+      <p className={styles.panelNote}>Not generated yet.</p>
+    </div>
+  );
+}
+
+function JobPostPanel({ session }: { session: JobSummary }) {
+  return (
+    <div className={styles.panel}>
+      <div className={styles.panelHead}>
+        <h2 className={styles.panelTitle}>Job post</h2>
+      </div>
+      <p className={styles.panelNote}>Parsed from {session.sourceUrl}</p>
+    </div>
+  );
+}
+
+function InsightsAside() {
+  return (
+    <aside className={styles.side}>
+      <div className={styles.sideCard}>
+        <p className={styles.sideLabel}>ATS score</p>
+        <p className={styles.panelNote}>Not generated yet.</p>
+      </div>
+      <div className={styles.sideCard}>
+        <p className={styles.sideLabel}>Keywords earned</p>
+        <p className={styles.panelNote}>Not generated yet.</p>
+      </div>
+      <div className={styles.sideCard}>
+        <p className={styles.sideLabel}>One honest gap</p>
+        <p className={styles.panelNote}>Not generated yet.</p>
+      </div>
+    </aside>
+  );
+}
+
+function DraftState({ onSaved }: { onSaved: (job: JobSummary) => void }) {
+  return (
+    <>
+      <div className={styles.scrollArea}>
+        <div className={styles.draftState}>
+          <p className={styles.kicker}>Tailoring</p>
+          <h1 className={styles.title}>Start a new tailoring session</h1>
+          <p className={styles.panelNote}>
+            Paste a job posting URL below to fetch the listing and begin
+            tailoring your CV.
+          </p>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function TailoredCvPanel({
-  session,
-  user,
-}: {
-  session: TailoringSession;
-  user: AppUser;
-}) {
-  return (
-    <div className={`${styles.panel} ${styles.cvPanel}`}>
-      <p className={styles.cvName}>{user.name}</p>
-      <p className={styles.cvMeta}>
-        {session.title} · London · {user.email}
-      </p>
-      <hr className={styles.cvDivider} />
-      <p className={styles.cvSectionLabel}>Summary</p>
-      <p className={styles.cvSummary}>{session.summary}</p>
-      <p className={styles.cvSectionLabel}>Experience</p>
-      <ul className={styles.cvList}>
-        {session.cvLines.map((line, i) => (
-          <li key={i} className={styles.cvItem}>
-            <span aria-hidden="true">—</span> {line}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function CoverLetterPanel({ session }: { session: TailoringSession }) {
-  return (
-    <div className={styles.panel}>
-      <p className={styles.panelNote}>Drafted from the same evidence</p>
-      {session.letter.map((paragraph, i) => (
-        <p key={i} className={styles.letterParagraph}>
-          {paragraph}
-        </p>
-      ))}
-      <div className={styles.letterActions}>
-        <button type="button" className={styles.regenButton}>
-          Regenerate
-        </button>
-        <button type="button" className={styles.copyButton}>
-          Copy
-        </button>
       </div>
-    </div>
+      <ComposeBar onSaved={onSaved} />
+    </>
   );
 }
 
-function JobPostPanel({ session }: { session: TailoringSession }) {
-  return (
-    <div className={styles.panel}>
-      <p className={styles.panelNote}>{session.postUrl}</p>
-      <ul className={styles.reqList}>
-        {session.reqs.map((req) => (
-          <li
-            key={req.label}
-            className={`${styles.reqRow} ${
-              req.status === "ok" ? styles.reqOk : ""
-            }`}
-          >
-            <span className={styles.reqIcon} aria-hidden="true">
-              {req.status === "ok" ? "✓" : req.status === "part" ? "~" : "–"}
-            </span>
-            <span className={styles.reqLabel}>{req.label}</span>
-            <span className={styles.reqState}>
-              {req.status === "ok"
-                ? "Covered"
-                : req.status === "part"
-                  ? "Partial"
-                  : "Not on record"}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+function validateUrl(value: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return "Enter a valid URL (including https://).";
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return "Only http or https URLs are supported.";
+  }
+  return null;
 }
 
-// Keyed by session id from the parent so switching sessions remounts this
-// component, restarting the tween from zero (mirrors Landing's HeroStage).
-function ScoreCard({ session }: { session: TailoringSession }) {
-  const [score, setScore] = useState(0);
+function ComposeBar({ onSaved }: { onSaved: (job: JobSummary) => void }) {
+  const [url, setUrl] = useState("");
+  const [state, setState] = useState<{
+    status: "idle" | "saving" | "error";
+    message: string;
+  }>({ status: "idle", message: "" });
 
-  useEffect(() => {
-    const target = session.score;
-    const tween = window.setInterval(() => {
-      setScore((current) => {
-        if (Math.abs(current - target) <= 0.4) return target;
-        return current + (target - current) * 0.12;
+  const isSaving = state.status === "saving";
+
+  async function handleSubmit() {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setState({ status: "error", message: "Paste a job posting URL first." });
+      return;
+    }
+
+    const validationError = validateUrl(trimmed);
+    if (validationError) {
+      setState({ status: "error", message: validationError });
+      return;
+    }
+
+    setState({ status: "saving", message: "Fetching the posting…" });
+
+    try {
+      const response = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
       });
-    }, 30);
-    return () => window.clearInterval(tween);
-  }, [session.score]);
+      const data = await response.json();
 
-  const rounded = Math.round(score);
-  const ringOffset =
-    SCORE_RING_CIRCUMFERENCE - (SCORE_RING_CIRCUMFERENCE * score) / 100;
+      if (!response.ok) {
+        setState({
+          status: "error",
+          message: data.error ?? "Couldn't save that URL. Try again.",
+        });
+        return;
+      }
 
-  return (
-    <div className={styles.scoreCard}>
-      <div className={styles.scoreTop}>
-        <svg viewBox="0 0 56 56" className={styles.ring}>
-          <circle cx="28" cy="28" r="23" className={styles.ringTrack} />
-          <circle
-            cx="28"
-            cy="28"
-            r="23"
-            className={styles.ringProgress}
-            strokeDasharray={SCORE_RING_CIRCUMFERENCE}
-            strokeDashoffset={ringOffset}
-          />
-        </svg>
-        <div>
-          <p className={styles.scoreValue}>{rounded}%</p>
-          <p className={styles.scoreSub}>match against 14 requirements</p>
-        </div>
-      </div>
-      <div className={styles.bars}>
-        {session.bars.map(([label, pct]) => (
-          <div key={label} className={styles.barRow}>
-            <div className={styles.barHead}>
-              <span>{label}</span>
-              <span>{pct}%</span>
-            </div>
-            <div className={styles.barTrack}>
-              <div className={styles.barFill} style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+      setUrl("");
+      setState({ status: "idle", message: "" });
+      onSaved(data.job);
+    } catch {
+      setState({ status: "error", message: "Couldn't save that URL. Try again." });
+    }
+  }
 
-function KeywordsCard({ session }: { session: TailoringSession }) {
-  return (
-    <div className={styles.sideCard}>
-      <p className={styles.sideLabel}>Keywords earned</p>
-      <div className={styles.chips}>
-        {session.keywords.map((word) => (
-          <span key={word} className={styles.chip}>
-            {word}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function GapCard({ session }: { session: TailoringSession }) {
-  return (
-    <div className={styles.sideCard}>
-      <p className={styles.sideLabel}>One honest gap</p>
-      <p className={styles.gapTitle}>{session.gapTitle}</p>
-      <p className={styles.gapBody}>{session.gapBody}</p>
-      <button type="button" className={styles.addRecordButton}>
-        Add to record
-      </button>
-    </div>
-  );
-}
-
-function ComposeBar() {
   return (
     <div className={styles.compose}>
       <div className={styles.composeRow}>
         <input
           type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste the job description URL you're applying for"
           className={styles.composeInput}
+          disabled={isSaving}
         />
-        <button type="button" className={styles.composeButton}>
-          Tailor a CV
+        <button
+          type="button"
+          className={styles.composeButton}
+          onClick={handleSubmit}
+          disabled={isSaving}
+        >
+          {isSaving ? "Saving…" : "Save job post"}
         </button>
       </div>
       <p className={styles.composeNote}>
-        Or drop a PDF of the posting · Average tailor takes 11 seconds
+        {state.message || "Only job posting URLs are accepted here."}
       </p>
     </div>
   );

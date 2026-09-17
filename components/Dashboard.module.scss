@@ -36,6 +36,24 @@
   font-family: inherit;
 }
 
+.accountBadge {
+  position: fixed;
+  top: 14px;
+  right: 20px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px 7px 7px;
+  border-radius: 13px;
+  background: #111814;
+  box-shadow: var(--shadow-sm);
+}
+
+.accountBadge .signOutButton {
+  width: auto;
+}
+
 // ── Sidebar ──────────────────────────────────────────────────────────────
 
 .sidebar {
@@ -176,58 +194,11 @@
   margin-top: 2px;
 }
 
-.sessionScore {
-  font-size: 11px;
-  color: color-mix(in srgb, #e9efe9 50%, transparent);
-}
-
-.sessionButtonActive .sessionScore {
-  color: var(--color-accent-300);
-}
-
-.sidebarFooter {
-  margin-top: auto;
-  display: grid;
-  gap: 8px;
-}
-
-.planCard {
-  padding: 12px;
-  border-radius: 11px;
-  background: #111814;
-  box-shadow: var(--shadow-sm);
-}
-
-.planLabel {
-  font-size: 11px;
-  color: color-mix(in srgb, #e9efe9 58%, transparent);
-  margin-bottom: 8px;
-}
-
-.planTrack {
-  height: 4px;
-  border-radius: 3px;
-  background: #1e2822;
-  overflow: hidden;
-}
-
-.planFill {
-  height: 100%;
-  background: var(--color-accent);
-}
-
-.profileLink {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border-radius: 10px;
-  color: var(--color-text);
-  transition: background 0.22s ease;
-}
-
-.profileLink:hover {
-  background: color-mix(in srgb, #e9efe9 6%, transparent);
+.sessionEmpty {
+  padding: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, #e9efe9 52%, transparent);
 }
 
 .profileAvatar {
@@ -393,6 +364,16 @@
   overflow-y: auto;
 }
 
+.draftState {
+  display: grid;
+  gap: 8px;
+  max-width: 480px;
+  margin: 12vh auto 0;
+  padding: 0 clamp(16px, 2.6vw, 30px);
+  text-align: center;
+  justify-items: center;
+}
+
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
@@ -438,334 +419,7 @@
   color: color-mix(in srgb, #e9efe9 58%, transparent);
 }
 
-.diffRow {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  padding: 18px 0;
-}
-
-.diffRow + .diffRow {
-  border-top: 1px solid color-mix(in srgb, #e9efe9 13%, transparent);
-}
-
-.diffNum {
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  color: color-mix(in srgb, #e9efe9 52%, transparent);
-  padding-top: 4px;
-}
-
-.diffBody {
-  min-width: 0;
-  display: grid;
-  gap: 11px;
-}
-
-.diffBefore {
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: color-mix(in srgb, #e9efe9 62%, transparent);
-  text-decoration: line-through;
-  text-decoration-color: color-mix(in srgb, #e9efe9 40%, transparent);
-}
-
-.diffAfterRow {
-  display: grid;
-  grid-template-columns: 2px 1fr;
-  gap: 12px;
-}
-
-.diffBar {
-  background: var(--color-accent);
-  border-radius: 2px;
-}
-
-.diffAfterCol {
-  min-width: 0;
-}
-
-.diffAfter {
-  font-size: 15px;
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-}
-
-.diffFootnote {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  margin-top: 9px;
-  font-size: 11.5px;
-  color: color-mix(in srgb, #e9efe9 58%, transparent);
-}
-
-.diffMatch {
-  color: var(--color-accent-300);
-}
-
-.diffActions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.keepButton {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
-  background: transparent;
-  color: var(--color-accent-200);
-  font-size: 12px;
-}
-
-.keepButton:hover {
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-}
-
-.revertButton {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: color-mix(in srgb, #e9efe9 75%, transparent);
-  font-size: 12px;
-}
-
-.revertButton:hover {
-  background: color-mix(in srgb, #e9efe9 7%, transparent);
-}
-
-// ── Tailored CV panel (rendered as a light "paper" preview) ──────────────
-
-.cvPanel {
-  background: #f4f7f4;
-  color: #0d1210;
-}
-
-.cvName {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.cvMeta {
-  font-size: 13px;
-  color: #4a5750;
-  margin-top: 4px;
-}
-
-.cvDivider {
-  border: 0;
-  height: 1px;
-  background: #d7dfd8;
-  margin: 18px 0;
-}
-
-.cvSectionLabel {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #1f8a40;
-  margin-bottom: 8px;
-}
-
-.cvSectionLabel + .cvSectionLabel {
-  margin-top: 20px;
-}
-
-.cvSummary {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: #22302a;
-}
-
-.cvList {
-  list-style: none;
-  margin-top: 20px;
-}
-
-.cvItem {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  margin-bottom: 9px;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: #22302a;
-}
-
-.cvItem span {
-  color: #1f8a40;
-}
-
-// ── Cover letter panel ───────────────────────────────────────────────────
-
-.letterParagraph {
-  margin: 14px 0 0;
-  font-size: 15px;
-  line-height: 1.7;
-  color: color-mix(in srgb, #e9efe9 80%, transparent);
-  text-wrap: pretty;
-}
-
-.letterActions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.regenButton {
-  padding: 8px 14px;
-  border-radius: 9px;
-  border: 1px solid var(--color-accent);
-  background: transparent;
-  color: var(--color-accent);
-  font-size: 13px;
-}
-
-.regenButton:hover {
-  background: color-mix(in srgb, var(--color-accent) 13%, transparent);
-}
-
-.copyButton {
-  padding: 8px 14px;
-  border-radius: 9px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: var(--color-text);
-  font-size: 13px;
-}
-
-.copyButton:hover {
-  background: color-mix(in srgb, #e9efe9 7%, transparent);
-}
-
-// ── Job post panel ───────────────────────────────────────────────────────
-
-.reqList {
-  display: grid;
-  gap: 12px;
-  margin-top: 12px;
-  list-style: none;
-}
-
-.reqRow {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  align-items: center;
-  padding: 13px 14px;
-  border-radius: 11px;
-  background: #101711;
-  box-shadow: var(--shadow-sm);
-}
-
-.reqIcon {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  background: #1e2822;
-  color: color-mix(in srgb, #e9efe9 72%, transparent);
-  font-size: 11px;
-}
-
-.reqOk .reqIcon {
-  background: var(--color-accent-900);
-  color: var(--color-accent-200);
-}
-
-.reqLabel {
-  min-width: 0;
-  font-size: 13.5px;
-  line-height: 1.4;
-}
-
-.reqState {
-  font-size: 11.5px;
-  color: color-mix(in srgb, #e9efe9 72%, transparent);
-  white-space: nowrap;
-}
-
-.reqOk .reqState {
-  color: var(--color-accent-300);
-}
-
 // ── Score / keywords / gap side cards ─────────────────────────────────────
-
-.scoreCard {
-  border-radius: 14px;
-  padding: 20px;
-  background: linear-gradient(165deg, #16241b, #101711);
-  box-shadow: var(--shadow-sm);
-}
-
-.scoreTop {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.ring {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  transform: rotate(-90deg);
-}
-
-.ringTrack {
-  fill: none;
-  stroke: #223028;
-  stroke-width: 6;
-}
-
-.ringProgress {
-  fill: none;
-  stroke: var(--color-accent);
-  stroke-width: 6;
-  stroke-linecap: round;
-}
-
-.scoreValue {
-  font-size: 26px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-.scoreSub {
-  font-size: 12.5px;
-  color: color-mix(in srgb, #e9efe9 62%, transparent);
-  margin-top: 4px;
-}
-
-.bars {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.barHead {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: color-mix(in srgb, #e9efe9 68%, transparent);
-  margin-bottom: 5px;
-}
-
-.barTrack {
-  height: 4px;
-  border-radius: 3px;
-  background: #1e2822;
-  overflow: hidden;
-}
-
-.barFill {
-  height: 100%;
-  background: var(--color-accent);
-}
 
 .sideCard {
   padding: 18px 20px;
@@ -780,47 +434,6 @@
   text-transform: uppercase;
   color: color-mix(in srgb, #e9efe9 52%, transparent);
   margin-bottom: 12px;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.chip {
-  font-size: 11.5px;
-  padding: 4px 10px;
-  border-radius: 7px;
-  background: var(--color-accent-900);
-  color: var(--color-accent-200);
-}
-
-.gapTitle {
-  font-size: 14px;
-  line-height: 1.5;
-  margin-bottom: 8px;
-}
-
-.gapBody {
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: color-mix(in srgb, #e9efe9 62%, transparent);
-  text-wrap: pretty;
-}
-
-.addRecordButton {
-  margin-top: 14px;
-  padding: 8px 13px;
-  border-radius: 9px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: var(--color-text);
-  font-size: 12.5px;
-}
-
-.addRecordButton:hover {
-  background: color-mix(in srgb, #e9efe9 7%, transparent);
 }
 
 // ── Compose bar ──────────────────────────────────────────────────────────
@@ -876,6 +489,11 @@
   box-shadow: 0 0 30px -10px color-mix(in srgb, var(--color-accent) 55%, transparent);
 }
 
+.composeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .composeNote {
   max-width: 900px;
   margin: 9px auto 0;
@@ -898,6 +516,15 @@
     min-height: 100dvh;
   }
 
+  .accountBadge {
+    position: static;
+    order: -1;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
+  }
+
   .sidebar {
     width: 100%;
     max-height: 42vh;
@@ -905,5 +532,23 @@
 
   .main {
     min-height: 58vh;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .compose {
+    padding: 12px 16px 16px;
+  }
+
+  .composeRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .composeButton {
+    width: 100%;
   }
 }
