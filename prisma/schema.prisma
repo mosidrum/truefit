@@ -16,6 +16,8 @@ model User {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   sessions    Session[]
+  cvs         Cv[]
+  jobPosts    JobPost[]
 }
 
 model Session {
@@ -31,4 +33,42 @@ model Session {
 
   @@index([userId])
   @@index([status])
+}
+
+model Cv {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName       String
+  fileType       String
+  fileSize       Int
+  fileHash       String
+  extractedText  String   @db.Text
+  parsedHeadline String?
+  parsedLocation String?
+  parsedYears    Int?
+  parsedSkills   Json?
+  parsedRoles    Json?
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, fileHash])
+  @@map("cvs")
+}
+
+model JobPost {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceUrl          String
+  urlHash            String
+  rawText            String   @db.Text
+  parsedTitle        String?
+  parsedCompany      String?
+  parsedLocation     String?
+  parsedDescription  String?  @db.Text
+  parsedRequirements Json?
+  createdAt          DateTime @default(now())
+
+  @@unique([userId, urlHash])
+  @@map("job_posts")
 }
