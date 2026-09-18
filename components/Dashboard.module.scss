@@ -36,6 +36,10 @@
   font-family: inherit;
 }
 
+.page :focus-visible {
+  outline-color: var(--color-accent);
+}
+
 .accountBadge {
   position: fixed;
   top: 14px;
@@ -141,13 +145,25 @@
   list-style: none;
 }
 
+.sessionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  position: relative;
+  border-radius: 9px;
+}
+
+.sessionRow:hover {
+  background: color-mix(in srgb, #e9efe9 6%, transparent);
+}
+
 .sessionButton {
   display: grid;
-  grid-template-columns: 2px 1fr auto;
+  grid-template-columns: 2px 1fr;
   gap: 10px;
   align-items: center;
-  width: 100%;
-  padding: 9px 10px;
+  min-width: 0;
+  padding: 9px 4px 9px 10px;
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -157,11 +173,19 @@
 }
 
 .sessionButton:hover {
-  background: color-mix(in srgb, #e9efe9 6%, transparent);
+  background: transparent;
 }
 
 .sessionButtonActive {
   background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.sessionRow:has(.sessionButtonActive) {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.sessionRow:has(.sessionButtonActive):hover {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
 }
 
 .sessionRail {
@@ -192,6 +216,61 @@
   font-size: 11px;
   color: color-mix(in srgb, #e9efe9 48%, transparent);
   margin-top: 2px;
+}
+
+.sessionMenu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.sessionMenuTrigger {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: color-mix(in srgb, #e9efe9 55%, transparent);
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+.sessionMenuTrigger:hover,
+.sessionMenuTrigger[aria-expanded="true"] {
+  background: color-mix(in srgb, #e9efe9 10%, transparent);
+  color: var(--color-text);
+}
+
+.sessionMenuPopover {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: 4px;
+  z-index: 20;
+  min-width: 120px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--color-divider);
+  background: #111814;
+  box-shadow: var(--shadow-sm);
+}
+
+.sessionMenuDelete {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #ffb199;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.sessionMenuDelete:hover {
+  background: color-mix(in srgb, #ffb199 12%, transparent);
 }
 
 .sessionEmpty {
@@ -302,19 +381,6 @@
   color: var(--color-accent-200);
 }
 
-.shareButton {
-  padding: 9px 14px;
-  border-radius: 9px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: var(--color-text);
-  font-size: 13px;
-}
-
-.shareButton:hover {
-  background: color-mix(in srgb, #e9efe9 7%, transparent);
-}
-
 .exportButton {
   padding: 9px 16px;
   border-radius: 9px;
@@ -372,6 +438,28 @@
   padding: 0 clamp(16px, 2.6vw, 30px);
   text-align: center;
   justify-items: center;
+}
+
+.draftLoading {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 360px);
+  justify-items: stretch;
+  text-align: center;
+}
+
+.draftLoadingTitle,
+.draftLoadingBody {
+  width: 100%;
+}
+
+.draftLoadingTitle {
+  display: flex;
+  justify-content: center;
+}
+
+.draftLoadingBody {
+  margin-top: 2px;
 }
 
 .grid {
@@ -434,6 +522,456 @@
   text-transform: uppercase;
   color: color-mix(in srgb, #e9efe9 52%, transparent);
   margin-bottom: 12px;
+}
+
+.scoreValue {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-accent-200);
+}
+
+.scoreValueMuted {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, #e9efe9 45%, transparent);
+}
+
+.scoreDelta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.scoreArrow {
+  font-size: 16px;
+  color: color-mix(in srgb, #e9efe9 40%, transparent);
+}
+
+.scoreDeltaPositive {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-200);
+}
+
+.scoreDeltaNegative {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #ffb199;
+}
+
+.keywordList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.keywordTag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--color-accent-900);
+  color: var(--color-accent-200);
+  font-size: 11.5px;
+}
+
+.gapPrompt {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
+}
+
+.gapPromptQuestion {
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in srgb, #e9efe9 78%, transparent);
+}
+
+.gapPromptActions,
+.gapFormActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.gapPromptYes,
+.gapSubmit {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.gapPromptYes:hover,
+.gapSubmit:hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.gapPromptYes:disabled,
+.gapSubmit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gapPromptNo {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: color-mix(in srgb, #e9efe9 70%, transparent);
+  font-size: 12.5px;
+}
+
+.gapPromptNo:hover {
+  background: color-mix(in srgb, #e9efe9 7%, transparent);
+}
+
+.gapPromptNo:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gapForm {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
+}
+
+.gapFormLabel {
+  font-size: 12px;
+  color: color-mix(in srgb, #e9efe9 70%, transparent);
+}
+
+.gapTextarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--color-divider);
+  background: #111814;
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.gapTextarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+.gapFiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.gapFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.gapFileButton {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12.5px;
+}
+
+.gapFileButton:hover {
+  background: color-mix(in srgb, #e9efe9 7%, transparent);
+}
+
+.gapFileButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gapFileHint {
+  font-size: 11px;
+  color: color-mix(in srgb, #e9efe9 48%, transparent);
+}
+
+.gapFileList {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+}
+
+.gapFileItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: color-mix(in srgb, #e9efe9 5%, transparent);
+}
+
+.gapFileName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.gapFileRemove {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, #e9efe9 60%, transparent);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.gapFileRemove:hover {
+  background: color-mix(in srgb, #ffb199 12%, transparent);
+  color: #ffb199;
+}
+
+.gapFormError {
+  font-size: 12px;
+  color: #ffb199;
+}
+
+.breakdownList {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+}
+
+.breakdownRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
+}
+
+.breakdownLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breakdownScore {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, #e9efe9 55%, transparent);
+}
+
+.breakdownRowWeak {
+  color: #ffb199;
+}
+
+.breakdownRowWeak .breakdownScore {
+  color: color-mix(in srgb, #ffb199 80%, transparent);
+}
+
+// ── Loading / error states ──────────────────────────────────────────────
+
+.skeletonStack {
+  display: grid;
+  gap: 6px;
+}
+
+.errorNote {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.retryButton {
+  padding: 7px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12.5px;
+}
+
+.retryButton:hover {
+  background: color-mix(in srgb, #e9efe9 7%, transparent);
+}
+
+// ── What changed ─────────────────────────────────────────────────────────
+
+.changeList {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+}
+
+.changeItem {
+  padding-bottom: 14px;
+  border-bottom: 1px solid color-mix(in srgb, #e9efe9 8%, transparent);
+}
+
+.changeItem:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.changeItemText {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.changeJustification {
+  font-size: 12px;
+  color: color-mix(in srgb, #e9efe9 58%, transparent);
+}
+
+// ── Tailored CV ──────────────────────────────────────────────────────────
+
+.cvContent {
+  display: grid;
+  gap: 4px;
+}
+
+.cvName {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cvHeadline {
+  margin: 2px 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cvContact {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: color-mix(in srgb, #e9efe9 58%, transparent);
+}
+
+.cvSummary {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
+  margin: 0;
+}
+
+.cvSection {
+  margin-top: 16px;
+}
+
+.cvSectionTitle {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #e9efe9 52%, transparent);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, #e9efe9 14%, transparent);
+}
+
+.cvSkillLine {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
+}
+
+.cvSkillGroupLabel {
+  font-weight: 500;
+  color: color-mix(in srgb, #e9efe9 92%, transparent);
+}
+
+.cvRole {
+  margin-bottom: 14px;
+}
+
+.cvRoleTitle {
+  margin: 0 0 2px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.cvRoleMeta {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  color: color-mix(in srgb, #e9efe9 52%, transparent);
+}
+
+.cvEducationLine {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
+}
+
+.cvBullets {
+  display: grid;
+  gap: 4px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
+}
+
+// ── Cover letter ─────────────────────────────────────────────────────────
+
+.coverLetterText {
+  display: grid;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: color-mix(in srgb, #e9efe9 85%, transparent);
+}
+
+// ── Job post ─────────────────────────────────────────────────────────────
+
+.jobPostFields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 6px 0 14px;
+  font-size: 13px;
+}
+
+.jobPostFields dt {
+  color: color-mix(in srgb, #e9efe9 52%, transparent);
+}
+
+.jobPostFields dd {
+  margin: 0;
+}
+
+.jobPostRequirements {
+  display: grid;
+  gap: 4px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, #e9efe9 82%, transparent);
 }
 
 // ── Compose bar ──────────────────────────────────────────────────────────
