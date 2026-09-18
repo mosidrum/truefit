@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(cuid())
-  clerkUserId String    @unique
+  id          String      @id @default(cuid())
+  clerkUserId String      @unique
   email       String?
   name        String?
   imageUrl    String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   sessions    Session[]
   cvs         Cv[]
   jobPosts    JobPost[]
+  tailorings  Tailoring[]
 }
 
 model Session {
@@ -56,19 +57,43 @@ model Cv {
 }
 
 model JobPost {
-  id                 String   @id @default(cuid())
+  id                 String     @id @default(cuid())
   userId             String
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   sourceUrl          String
   urlHash            String
-  rawText            String   @db.Text
+  rawText            String     @db.Text
   parsedTitle        String?
   parsedCompany      String?
   parsedLocation     String?
-  parsedDescription  String?  @db.Text
+  parsedDescription  String?    @db.Text
   parsedRequirements Json?
-  createdAt          DateTime @default(now())
+  createdAt          DateTime   @default(now())
+  tailoring          Tailoring?
 
   @@unique([userId, urlHash])
   @@map("job_posts")
+}
+
+model Tailoring {
+  id                     String   @id @default(cuid())
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobPostId              String   @unique
+  jobPost                JobPost  @relation(fields: [jobPostId], references: [id], onDelete: Cascade)
+  model                  String
+  tailoredCv             Json
+  coverLetter            String   @db.Text
+  whatChanged            Json
+  preTailoringMatchScore Int      @default(0)
+  preTailoringBreakdown  Json?
+  atsScore               Int
+  atsScoreBreakdown      Json?
+  keywordsCovered        Json
+  unmetRequirement       String?  @db.Text
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([userId])
+  @@map("tailorings")
 }
