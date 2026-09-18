@@ -178,12 +178,6 @@ export default function ProfileView({
             <p className={styles.kicker}>Career record</p>
             <h1 className={styles.title}>{user.name}</h1>
           </div>
-          <button type="button" className={styles.importButton}>
-            Import from LinkedIn
-          </button>
-          <button type="button" className={styles.saveButton}>
-            Save record
-          </button>
         </header>
 
         <div className={styles.content}>
@@ -312,12 +306,6 @@ export default function ProfileView({
                                 </span>
                               </div>
                             ))}
-                            <button
-                              type="button"
-                              className={styles.addBulletButton}
-                            >
-                              Add a bullet
-                            </button>
                           </div>
                         )}
                       </div>
@@ -451,6 +439,7 @@ export default function ProfileView({
                   ref={fileInputRef}
                   type="file"
                   accept=".pdf,.doc,.docx,.txt"
+                  aria-label="Upload a CV document"
                   onChange={handleDocumentUpload}
                   className={styles.docUploadInput}
                   disabled={uploadState.status === "uploading"}
@@ -484,8 +473,18 @@ export default function ProfileView({
                   Your record is encrypted and scoped to this account. It is
                   never used to train models.
                 </p>
-                <button type="button" className={styles.deleteButton}>
-                  Delete everything
+                <button
+                  type="button"
+                  className={styles.deleteButton}
+                  disabled={documents.length === 0 || deleteState.status === "deleting"}
+                  onClick={() =>
+                    confirmAndDelete(
+                      documents.map((doc) => doc.id),
+                      "everything — this clears your entire profile"
+                    )
+                  }
+                >
+                  {deleteState.status === "deleting" ? "Deleting…" : "Delete everything"}
                 </button>
               </div>
             </div>
