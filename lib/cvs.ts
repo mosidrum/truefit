@@ -118,6 +118,21 @@ export async function getCvSummaries(userId: string): Promise<CvSummary[]> {
   });
 }
 
+export type CvRawText = {
+  fileName: string;
+  extractedText: string;
+};
+
+/** Raw extracted text per CV, most recent first — the primary source of
+ * truth for tailoring generation (richer than the lossy parsed fields). */
+export async function getCvRawTextsForUser(userId: string): Promise<CvRawText[]> {
+  return prisma.cv.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    select: { fileName: true, extractedText: true },
+  });
+}
+
 /** Deletes the given CVs (and their extracted text/parsed data) — scoped to
  * the owning user, so ids that don't belong to them are silently ignored. */
 export async function deleteCvs(

@@ -32,6 +32,7 @@ export type AggregatedProfile = {
   skills: Skill[];
   completion: number;
   gapNote: string;
+  years: number | null;
 };
 
 function escapeRegExp(value: string): string {
@@ -44,6 +45,7 @@ const EMPTY_PROFILE: AggregatedProfile = {
   skills: [],
   completion: 0,
   gapNote: "Upload a CV to start building your record.",
+  years: null,
 };
 
 /** Aggregates structured data parsed from every CV a user has uploaded into one profile. */
@@ -152,5 +154,6 @@ export async function buildProfileFromCvs(
     skills,
     completion: Math.min(completion, 100),
     gapNote,
+    years,
   };
 }

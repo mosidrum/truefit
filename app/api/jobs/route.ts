@@ -8,6 +8,7 @@ import {
   updateJobPostParsedFields,
 } from "@/lib/jobs";
 import { parseJobDescription, type ParsedJob } from "@/lib/openai";
+import { isRetryableOpenAIError, withRetry } from "@/lib/retry";
 
 export async function POST(req: NextRequest) {
   const user = await getAppUser();
@@ -41,7 +42,11 @@ export async function POST(req: NextRequest) {
           sourceUrl: existing.sourceUrl,
           parsedTitle: existing.parsedTitle,
           parsedCompany: existing.parsedCompany,
+          parsedLocation: existing.parsedLocation,
+          parsedDescription: existing.parsedDescription,
+          parsedRequirements: existing.parsedRequirements as string[] | null,
           createdAt: existing.createdAt,
+          hasTailoring: existing.tailoring !== null,
         },
       },
       { status: 200 }
@@ -61,7 +66,9 @@ export async function POST(req: NextRequest) {
 
   let parsed: ParsedJob | null = null;
   try {
-    parsed = await parseJobDescription(rawText);
+    parsed = await withRetry(() => parseJobDescription(rawText), {
+      shouldRetry: isRetryableOpenAIError,
+    });
   } catch (error) {
     // Structured extraction is best-effort — the job post and its raw text
     // are still saved even if parsing fails (e.g. no API key set).
@@ -88,7 +95,13 @@ export async function POST(req: NextRequest) {
           sourceUrl: updated.sourceUrl,
           parsedTitle: updated.parsedTitle,
           parsedCompany: updated.parsedCompany,
+          parsedLocation: updated.parsedLocation,
+          parsedDescription: updated.parsedDescription,
+          parsedRequirements: updated.parsedRequirements as string[] | null,
           createdAt: updated.createdAt,
+          // A reparse of an existing row can't have gained tailoring from
+          // this request — carry forward whatever it already had.
+          hasTailoring: existing.tailoring !== null,
         },
       },
       { status: 200 }
@@ -111,7 +124,11 @@ export async function POST(req: NextRequest) {
         sourceUrl: created.sourceUrl,
         parsedTitle: created.parsedTitle,
         parsedCompany: created.parsedCompany,
+        parsedLocation: created.parsedLocation,
+        parsedDescription: created.parsedDescription,
+        parsedRequirements: created.parsedRequirements as string[] | null,
         createdAt: created.createdAt,
+        hasTailoring: false,
       },
     },
     { status: 201 }
