@@ -210,6 +210,8 @@ describe("getOrGenerateTailoring", () => {
     const generateArgs = generateTailoringMock.mock.calls[0][0];
     expect(generateArgs.weakPointsPrompt).toContain("PRE-TAILORING FIT");
     expect(generateArgs.weakPointsPrompt).toContain(`${record.preTailoringMatchScore}/100`);
+    expect(generateArgs.candidateText).toContain("CANDIDATE SOURCE POOL");
+    expect(generateArgs.candidateText).toContain("never share the same experience/achievement wording");
 
     // Both breakdowns landed on the record with all 9 criteria each (always
     // populated on a freshly-generated record, never null).

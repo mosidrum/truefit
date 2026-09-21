@@ -164,6 +164,7 @@ describe("generateTailoring", () => {
 
     const systemContent = responsesCreateMock.mock.calls[0][0].input[0].content as string;
     expect(systemContent).toContain("never invent");
+    expect(systemContent).toContain("Source pool, never paste");
     expect(systemContent).toContain("Contact fields");
     expect(systemContent).toContain("Project dates");
   });

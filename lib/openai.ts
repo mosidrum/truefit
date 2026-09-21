@@ -1,5 +1,14 @@
 import OpenAI from "openai";
-import { TAILORING_SKILL_PROMPT } from "@/lib/tailoringSkill";
+import {
+  ATS_SUBSCORES_SYSTEM_PROMPT,
+  JOB_EXTRACTION_SYSTEM_PROMPT,
+  RESUME_EXTRACTION_SYSTEM_PROMPT,
+} from "@/lib/openaiInstructions";
+import {
+  CV_STYLE_RULES_PROMPT,
+  TAILORING_OUTPUT_CONTRACT,
+  TAILORING_SKILL_PROMPT,
+} from "@/lib/tailoringSkill";
 
 /** Overridable via env so models can be switched/compared without a code change. */
 export const OPENAI_MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
@@ -75,10 +84,7 @@ export async function parseResumeText(text: string): Promise<ParsedResume> {
     input: [
       {
         role: "system",
-        content:
-          "You extract structured resume data from raw CV/resume text. Only use information " +
-          "present in the text — never invent roles, companies, dates, or skills. Use null or " +
-          "an empty array for anything not present in the text.",
+        content: RESUME_EXTRACTION_SYSTEM_PROMPT,
       },
       { role: "user", content: text.slice(0, 20000) },
     ],
@@ -130,11 +136,7 @@ export async function parseJobDescription(text: string): Promise<ParsedJob> {
     input: [
       {
         role: "system",
-        content:
-          "You extract structured job posting data from raw web page text that may include " +
-          "navigation, footer, or unrelated boilerplate alongside the actual posting. Only use " +
-          "information present in the text — never invent a title, company, or requirement. Use " +
-          "null or an empty array for anything not present in the text.",
+        content: JOB_EXTRACTION_SYSTEM_PROMPT,
       },
       { role: "user", content: text.slice(0, 20000) },
     ],
@@ -279,19 +281,6 @@ const ATS_SUBSCORES_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const ATS_SUBSCORES_SYSTEM_PROMPT =
-  "You rate a candidate's CV/profile material against a job posting on exactly three rubric " +
-  "criteria, each scored 0-3. Be honest and conservative — never award points for something the " +
-  "material doesn't genuinely show, and never invent degrees, certifications, or formatting quality " +
-  "that isn't there. If a criterion doesn't apply (e.g. the job states no education/certification " +
-  "requirement), score it 3 and say so in the detail.\n\n" +
-  "- formattingCleanliness: judge from the material's structure (line breaks, spacing, apparent " +
-  "layout, section organization) how clean and ATS-parser-friendly it appears to be.\n" +
-  "- educationMatch: compare the job's stated education requirement (if any) against any education " +
-  "mentioned in the candidate material.\n" +
-  "- certifications: compare the job's stated certification requirement (if any) against any " +
-  "certification mentioned in the candidate material.";
-
 /**
  * Rates the three ATS-rubric criteria that need judgment rather than pure
  * text matching (formatting cleanliness, education match, certifications)
@@ -370,6 +359,10 @@ const TAILORING_SCHEMA = {
         },
         experience: {
           type: "array",
+          description:
+            "Job-specific reconstruction of the candidate's real roles. Every entry and every " +
+            "achievement bullet must be freshly written for THIS posting from the source pool — " +
+            "never copied verbatim. Different jobs must produce different experience/achievement wording.",
           items: {
             type: "object",
             properties: {
@@ -379,13 +372,17 @@ const TAILORING_SCHEMA = {
               context: {
                 type: "string",
                 description:
-                  "One-sentence context line for this role (dates are shown separately) — a concise " +
-                  "blurb on the role/company, e.g. what the team owned or the company's product.",
+                  "One-sentence context line for this role (dates are shown separately) — rewritten " +
+                  "for this job's domain/scope; a concise blurb on the role/company, never pasted " +
+                  "unchanged from the pool.",
               },
               bullets: {
                 type: "array",
                 items: { type: "string" },
-                description: "Tailored, truthful, achievement-oriented bullets for this role.",
+                description:
+                  "Every achievement/responsibility for this role, freshly tailored to this job's " +
+                  "requirements — never a verbatim pool bullet. Truthful, achievement-oriented, " +
+                  "and specific to this posting.",
               },
             },
             required: ["title", "company", "dates", "context", "bullets"],
@@ -509,64 +506,6 @@ const TAILORING_SCHEMA = {
   required: ["tailoredCv", "coverLetter", "whatChanged", "insights"],
   additionalProperties: false,
 } as const;
-
-const CV_STYLE_RULES_PROMPT =
-  "\n\nSTYLE AND UNIQUENESS RULES\n" +
-  "- No buzzwords or cliché filler: never use empty phrases like \"results-driven\", " +
-  "\"team player\", \"synergy\", \"go-getter\", \"detail-oriented\", \"hardworking\", " +
-  "\"self-starter\", \"dynamic professional\", \"proven track record\", \"think outside the box\", " +
-  "or \"wears many hats\". Replace every instance of this kind of language with a concrete, " +
-  "evidence-backed statement instead.\n" +
-  "- Uniqueness: every tailored CV must be written fresh from this candidate's specific evidence " +
-  "and this specific job — never fall back to generic, templated, or interchangeable phrasing that " +
-  "could apply to any candidate or any job.\n" +
-  "- Job-specific anchoring and summary as the primary pitch: the summary is the single highest-leverage " +
-  "section of the CV — assume the recruiter may read nothing else. Open with a direct positioning " +
-  "statement — years of experience plus explicit alignment to this job's actual title (e.g. \"Senior " +
-  "Backend Engineer with 6 years building...\") — whenever the candidate's real experience truthfully " +
-  "supports that framing; if it doesn't, open with the strongest truthful claim of fit instead. The " +
-  "summary must explicitly reference this job's actual title/company and must work in language from as " +
-  "many of the job's genuinely-supported top requirements as the candidate's real evidence truthfully " +
-  "allows — not just 2-3 token requirements, but as comprehensive a requirement/keyword echo as " +
-  "truthfulness permits (see Skill §5 Professional Summary, §8 Keyword Coverage, and the Core Principle " +
-  "— never claim a requirement the evidence doesn't support; omission is always safer than fabrication). " +
-  "Write it as a self-contained pitch: a recruiter who reads only the summary and nothing else should " +
-  "conclude, from the summary alone, that this candidate is a strong match for this specific job. If two " +
-  "tailored CVs from the same candidate would read as interchangeable across two different job postings, " +
-  "or if the summary could be read in isolation without concluding strong fit, the summary has failed " +
-  "this rule.\n" +
-  "- Conversion and readability: write for a recruiter skimming in seconds. Use strong action verbs, " +
-  "quantify impact wherever the evidence supports it, keep bullets to one or two lines, and lead " +
-  "each section with its strongest, most relevant point so the CV is immediately eye-catching and " +
-  "easy to scan.\n" +
-  "- Education: populate the education array by extracting degree, institution, and dates verbatim " +
-  "from the candidate's real CV text/profile material — never invent a degree, institution, or date " +
-  "that isn't genuinely there. If the candidate's material shows no education, return an empty array " +
-  "rather than fabricating one.\n" +
-  "- Experience context line: for each role, write a single concise sentence in `context` — a plain, " +
-  "factual line about the role or company (e.g. team scope, product, or company domain) that a reader " +
-  "would expect directly under the role/dates and above the bullets. Keep it factual and non-redundant " +
-  "with the bullets that follow.\n" +
-  "- Skill categories: group skills into a small number of labels that genuinely reflect the " +
-  "candidate's real tooling and domains (for example Languages, Frontend, Backend, Data, Infra, " +
-  "Testing, or others that better fit this candidate) — choose labels consistently, put the most " +
-  "relevant category and items first, and never invent a skill or category not evidenced in the " +
-  "candidate's material.\n" +
-  "- Contact fields: populate location, website, and github only from values genuinely present in " +
-  "the candidate's material. Use an empty string when a field is absent — never invent a location, " +
-  "URL, or handle. Prefer the clean host/path form when a full URL is present (e.g. johnoshalusi.com, " +
-  "github.com/greatertomi).\n" +
-  "- Project dates: populate each project's dates from the candidate's material when available; " +
-  "use an empty string when unknown — never invent a date range.";
-
-const TAILORING_OUTPUT_CONTRACT =
-  "\n\nYou must also produce, from the exact same act of tailoring:\n" +
-  "- coverLetter: a tailored cover letter (plain text, 3-5 short paragraphs) for this job, grounded only in truthful material from the CV.\n" +
-  "- whatChanged: every new framing, surfaced detail, or reordering you introduced that was not explicitly stated in the candidate's base profile summary but is truthfully supported by the raw CV text — each with a one-sentence justification citing the source evidence. Do not list purely cosmetic edits (e.g. formatting) — only substantive reframing/surfacing.\n" +
-  "- insights.atsSubscores: honest 0-3 ratings, each with a one-sentence justification, for formattingCleanliness, educationMatch, and certifications of the TAILORED CV you just produced — see the rubric definitions in the schema. Never award points for something not genuinely true of the tailored output.\n" +
-  "- insights.keywordsCovered: job-description keywords/phrases genuinely and truthfully covered by the tailored CV.\n" +
-  "- insights.unmetRequirement: exactly one job requirement the candidate's material does not support — stated plainly, never fabricated as covered. Use null only if there is truly no gap.\n" +
-  "Return only the JSON object matching the provided schema.";
 
 /**
  * Generates a truthfulness-bounded tailored CV, cover letter, what-changed

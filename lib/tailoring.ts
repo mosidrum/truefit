@@ -124,10 +124,16 @@ function buildCandidateText(
     .join("\n\n");
 
   let text =
-    "CANDIDATE MATERIAL\n\n" +
-    "Aggregated profile summary (structured signal — evidence-counted skills, deduped roles):\n" +
+    "CANDIDATE SOURCE POOL\n\n" +
+    "Uploaded CVs are a combined evidence pool — not paste-ready content. Nothing from this pool " +
+    "(no experience description, no achievement bullet, no summary line) may be copied as-is into " +
+    "the tailored CV. Facts stay fixed (employers, titles, dates, real metrics/skills); every " +
+    "experience and every achievement under it must be rewritten and reoriented so this specific " +
+    "job ranks as a fit. Two different jobs never share the same experience/achievement wording.\n\n" +
+    "Aggregated profile summary (structured pool signal — evidence-counted skills, deduped roles):\n" +
     profileSummary +
-    "\n\nRaw CV documents (verbatim extracted text — primary source of truth; search this for evidence not captured in the summary above):\n" +
+    "\n\nRaw CV documents (verbatim extracted text — pool evidence to search and transform; richer " +
+    "than the summary above, still never copy-paste into the output):\n" +
     cvBlocks;
 
   const trimmed = additionalContext?.trim();
