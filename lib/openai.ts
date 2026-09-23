@@ -20,13 +20,44 @@ export type ParsedResumeRole = {
   bullets: string[];
 };
 
+export type ParsedResumeEducation = {
+  degree: string;
+  institution: string;
+  dates: string;
+};
+
+export type ParsedResumeProject = {
+  name: string;
+  description: string;
+  bullets: string[];
+};
+
+export type ParsedOtherEntry = {
+  key: string;
+  value: string;
+};
+
 export type ParsedResume = {
   headline: string | null;
   location: string | null;
   yearsOfExperience: number | null;
   skills: string[];
   roles: ParsedResumeRole[];
+  education: ParsedResumeEducation[];
+  certifications: string[];
+  projects: ParsedResumeProject[];
+  other: ParsedOtherEntry[];
 };
+
+const OTHER_ENTRY_SCHEMA = {
+  type: "object",
+  properties: {
+    key: { type: "string", description: "Short label for this extra detail." },
+    value: { type: "string", description: "The detail as stated in the source text." },
+  },
+  required: ["key", "value"],
+  additionalProperties: false,
+} as const;
 
 const RESUME_SCHEMA = {
   type: "object",
@@ -60,8 +91,56 @@ const RESUME_SCHEMA = {
         additionalProperties: false,
       },
     },
+    education: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          degree: { type: "string" },
+          institution: { type: "string" },
+          dates: { type: "string" },
+        },
+        required: ["degree", "institution", "dates"],
+        additionalProperties: false,
+      },
+      description: "Education entries from the resume.",
+    },
+    certifications: {
+      type: "array",
+      items: { type: "string" },
+      description: "Certifications and licenses named in the resume.",
+    },
+    projects: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          description: { type: "string" },
+          bullets: { type: "array", items: { type: "string" } },
+        },
+        required: ["name", "description", "bullets"],
+        additionalProperties: false,
+      },
+      description: "Notable projects outside formal employment roles.",
+    },
+    other: {
+      type: "array",
+      items: OTHER_ENTRY_SCHEMA,
+      description: "Any resume detail that does not fit the named fields (languages, awards, etc.).",
+    },
   },
-  required: ["headline", "location", "yearsOfExperience", "skills", "roles"],
+  required: [
+    "headline",
+    "location",
+    "yearsOfExperience",
+    "skills",
+    "roles",
+    "education",
+    "certifications",
+    "projects",
+    "other",
+  ],
   additionalProperties: false,
 } as const;
 
@@ -101,12 +180,25 @@ export async function parseResumeText(text: string): Promise<ParsedResume> {
   return JSON.parse(response.output_text) as ParsedResume;
 }
 
+export type ParsedJobRequirements = {
+  required: string[];
+  preferred: string[];
+};
+
 export type ParsedJob = {
   title: string | null;
   company: string | null;
   location: string | null;
-  description: string | null;
-  requirements: string[];
+  employmentType: string | null;
+  seniority: string | null;
+  salary: string | null;
+  summary: string | null;
+  responsibilities: string[];
+  requirements: ParsedJobRequirements;
+  skills: string[];
+  benefits: string[];
+  domain: string[];
+  other: ParsedOtherEntry[];
 };
 
 const JOB_SCHEMA = {
@@ -115,21 +207,117 @@ const JOB_SCHEMA = {
     title: { type: ["string", "null"], description: "The job title being advertised." },
     company: { type: ["string", "null"], description: "The hiring company's name." },
     location: { type: ["string", "null"], description: "Where the role is based, e.g. city or 'Remote'." },
-    description: {
+    employmentType: {
       type: ["string", "null"],
-      description: "A concise 2-4 sentence summary of what the role involves.",
+      description: "Full-time, part-time, contract, internship, etc.",
     },
-    requirements: {
+    seniority: {
+      type: ["string", "null"],
+      description: "Seniority level if stated (junior, mid, senior, staff, lead, etc.).",
+    },
+    salary: {
+      type: ["string", "null"],
+      description: "Compensation / salary range if stated, as written.",
+    },
+    summary: {
+      type: ["string", "null"],
+      description: "Short overview of the role. Must not replace responsibilities/requirements lists.",
+    },
+    responsibilities: {
       type: "array",
       items: { type: "string" },
-      description: "Key required skills, qualifications, or experience mentioned in the posting.",
+      description:
+        "Every distinct duty / 'what you will do' item, including ones embedded in prose paragraphs.",
+    },
+    requirements: {
+      type: "object",
+      properties: {
+        required: {
+          type: "array",
+          items: { type: "string" },
+          description: "Must-have qualifications and experience bars.",
+        },
+        preferred: {
+          type: "array",
+          items: { type: "string" },
+          description: "Nice-to-have / preferred qualifications.",
+        },
+      },
+      required: ["required", "preferred"],
+      additionalProperties: false,
+    },
+    skills: {
+      type: "array",
+      items: { type: "string" },
+      description: "Technologies, tools, and hard skills named in the posting.",
+    },
+    benefits: {
+      type: "array",
+      items: { type: "string" },
+      description: "Benefits and perks if stated.",
+    },
+    domain: {
+      type: "array",
+      items: { type: "string" },
+      description: "Industry / product domain signals (fintech, healthcare, B2B SaaS, etc.).",
+    },
+    other: {
+      type: "array",
+      items: OTHER_ENTRY_SCHEMA,
+      description: "Any job-relevant detail that does not fit the named fields.",
     },
   },
-  required: ["title", "company", "location", "description", "requirements"],
+  required: [
+    "title",
+    "company",
+    "location",
+    "employmentType",
+    "seniority",
+    "salary",
+    "summary",
+    "responsibilities",
+    "requirements",
+    "skills",
+    "benefits",
+    "domain",
+    "other",
+  ],
   additionalProperties: false,
 } as const;
 
-/** Extracts structured job posting data (title, company, requirements) from raw page text via OpenAI. */
+/** Flattens required + preferred requirement strings for UI chips and legacy callers. */
+export function flattenJobRequirementList(job: ParsedJob): string[] {
+  return [...job.requirements.required, ...job.requirements.preferred].filter(
+    (item) => item.trim().length > 0
+  );
+}
+
+/**
+ * Phrases used for deterministic job↔profile matching: skills, responsibilities,
+ * requirements, and domain — not benefits/boilerplate.
+ */
+export function jobMatchPhrases(job: ParsedJob): string[] {
+  const phrases = [
+    ...job.skills,
+    ...job.responsibilities,
+    ...job.requirements.required,
+    ...job.requirements.preferred,
+    ...job.domain,
+  ];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of phrases) {
+    const phrase = raw.trim();
+    if (!phrase) continue;
+    const key = phrase.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(phrase);
+  }
+  return out;
+}
+
+/** Extracts a complete structured job posting JSON from raw page text via OpenAI. */
 export async function parseJobDescription(text: string): Promise<ParsedJob> {
   const response = await getClient().responses.create({
     model: OPENAI_MODEL,

@@ -34,6 +34,10 @@ describe("parseResumeText", () => {
       yearsOfExperience: 4,
       skills: ["React", "TypeScript"],
       roles: [{ title: "Engineer", company: "Acme", dates: "2021-present", bullets: ["Built things."] }],
+      education: [{ degree: "BS CS", institution: "State U", dates: "2018" }],
+      certifications: ["AWS SAA"],
+      projects: [{ name: "Side App", description: "A side project.", bullets: ["Shipped v1."] }],
+      other: [{ key: "Languages", value: "English, French" }],
     };
     responsesCreateMock.mockResolvedValue({ output_text: JSON.stringify(parsed) });
 
@@ -55,6 +59,10 @@ describe("parseResumeText", () => {
         yearsOfExperience: null,
         skills: [],
         roles: [],
+        education: [],
+        certifications: [],
+        projects: [],
+        other: [],
       }),
     });
 
@@ -76,8 +84,19 @@ describe("parseJobDescription", () => {
       title: "Frontend Engineer",
       company: "Acme",
       location: "Remote",
-      description: "Build UIs.",
-      requirements: ["React", "3+ years experience"],
+      employmentType: "Full-time",
+      seniority: "Mid",
+      salary: null,
+      summary: "Build UIs.",
+      responsibilities: ["Own the checkout UI"],
+      requirements: {
+        required: ["React", "3+ years experience"],
+        preferred: ["GraphQL"],
+      },
+      skills: ["React", "TypeScript"],
+      benefits: ["Health insurance"],
+      domain: ["e-commerce"],
+      other: [{ key: "Visa", value: "Must be authorized to work in the US" }],
     };
     responsesCreateMock.mockResolvedValue({ output_text: JSON.stringify(parsed) });
 
