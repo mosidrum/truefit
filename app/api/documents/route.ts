@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { getAppUser } from "@/lib/session";
 import {
   createCv,
+  cvParsedFieldsFromJson,
   deleteCvs,
   extractText,
   findExistingCv,
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
   const existing = await findExistingCv(user.id, fileHash);
 
   // Already uploaded and successfully enriched — nothing new to do.
-  if (existing && existing.parsedRoles !== null) {
+  if (existing && existing.parsedJson !== null) {
     return Response.json({ duplicate: true }, { status: 200 });
   }
 
@@ -74,13 +75,16 @@ export async function POST(req: NextRequest) {
     console.error("Resume structured extraction failed:", error);
   }
 
-  const parsedFields = {
-    parsedHeadline: parsed?.headline ?? null,
-    parsedLocation: parsed?.location ?? null,
-    parsedYears: parsed?.yearsOfExperience ?? null,
-    parsedSkills: parsed?.skills ?? null,
-    parsedRoles: parsed?.roles ?? null,
-  };
+  const parsedFields = parsed
+    ? cvParsedFieldsFromJson(parsed)
+    : {
+        parsedHeadline: null,
+        parsedLocation: null,
+        parsedYears: null,
+        parsedSkills: null,
+        parsedRoles: null,
+        parsedJson: null,
+      };
 
   if (existing) {
     await updateCvParsedFields(existing.id, parsedFields);

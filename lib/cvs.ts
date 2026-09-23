@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { PDFParse } from "pdf-parse";
 import * as mammoth from "mammoth";
 import { prisma } from "@/lib/prisma";
-import type { ParsedResumeRole } from "@/lib/openai";
+import type { ParsedResume, ParsedResumeRole } from "@/lib/openai";
 
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -58,6 +58,18 @@ export async function findExistingCv(userId: string, fileHash: string) {
   });
 }
 
+/** Denormalized columns + full JSON blob derived from a successful resume parse. */
+export function cvParsedFieldsFromJson(parsed: ParsedResume) {
+  return {
+    parsedHeadline: parsed.headline,
+    parsedLocation: parsed.location,
+    parsedYears: parsed.yearsOfExperience,
+    parsedSkills: parsed.skills,
+    parsedRoles: parsed.roles,
+    parsedJson: parsed,
+  };
+}
+
 export async function createCv(
   userId: string,
   data: {
@@ -71,6 +83,7 @@ export async function createCv(
     parsedYears?: number | null;
     parsedSkills?: string[] | null;
     parsedRoles?: ParsedResumeRole[] | null;
+    parsedJson?: ParsedResume | null;
   }
 ) {
   return prisma.cv.create({
@@ -79,6 +92,7 @@ export async function createCv(
       ...data,
       parsedSkills: data.parsedSkills ?? undefined,
       parsedRoles: data.parsedRoles ?? undefined,
+      parsedJson: data.parsedJson ?? undefined,
     },
   });
 }
@@ -91,6 +105,7 @@ export async function updateCvParsedFields(
     parsedYears?: number | null;
     parsedSkills?: string[] | null;
     parsedRoles?: ParsedResumeRole[] | null;
+    parsedJson?: ParsedResume | null;
   }
 ) {
   return prisma.cv.update({
@@ -99,6 +114,7 @@ export async function updateCvParsedFields(
       ...data,
       parsedSkills: data.parsedSkills ?? undefined,
       parsedRoles: data.parsedRoles ?? undefined,
+      parsedJson: data.parsedJson ?? undefined,
     },
   });
 }

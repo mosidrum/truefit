@@ -1,6 +1,10 @@
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { withRetry } from "@/lib/retry";
+import {
+  flattenJobRequirementList,
+  type ParsedJob,
+} from "@/lib/openai";
 
 const FETCH_TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_BYTES = 3 * 1024 * 1024; // 3MB of HTML is already generous
@@ -128,6 +132,18 @@ export async function getJobPostForTailoring(userId: string, id: string) {
   return prisma.jobPost.findFirst({ where: { id, userId } });
 }
 
+/** Denormalized columns + full JSON blob derived from a successful parse. */
+export function jobParsedFieldsFromJson(parsed: ParsedJob) {
+  return {
+    parsedTitle: parsed.title,
+    parsedCompany: parsed.company,
+    parsedLocation: parsed.location,
+    parsedDescription: parsed.summary,
+    parsedRequirements: flattenJobRequirementList(parsed),
+    parsedJson: parsed,
+  };
+}
+
 export async function createJobPost(
   userId: string,
   data: {
@@ -139,6 +155,7 @@ export async function createJobPost(
     parsedLocation?: string | null;
     parsedDescription?: string | null;
     parsedRequirements?: string[] | null;
+    parsedJson?: ParsedJob | null;
   }
 ) {
   return prisma.jobPost.create({
@@ -146,6 +163,7 @@ export async function createJobPost(
       userId,
       ...data,
       parsedRequirements: data.parsedRequirements ?? undefined,
+      parsedJson: data.parsedJson ?? undefined,
     },
   });
 }
@@ -158,6 +176,7 @@ export async function updateJobPostParsedFields(
     parsedLocation?: string | null;
     parsedDescription?: string | null;
     parsedRequirements?: string[] | null;
+    parsedJson?: ParsedJob | null;
   }
 ) {
   return prisma.jobPost.update({
@@ -165,6 +184,7 @@ export async function updateJobPostParsedFields(
     data: {
       ...data,
       parsedRequirements: data.parsedRequirements ?? undefined,
+      parsedJson: data.parsedJson ?? undefined,
     },
   });
 }
@@ -188,9 +208,36 @@ export type JobSummary = {
   parsedLocation: string | null;
   parsedDescription: string | null;
   parsedRequirements: string[] | null;
+  parsedJson: ParsedJob | null;
   createdAt: Date;
   hasTailoring: boolean;
 };
+
+function jobPayload(row: {
+  id: string;
+  sourceUrl: string;
+  parsedTitle: string | null;
+  parsedCompany: string | null;
+  parsedLocation: string | null;
+  parsedDescription: string | null;
+  parsedRequirements: unknown;
+  parsedJson: unknown;
+  createdAt: Date;
+  hasTailoring: boolean;
+}): JobSummary {
+  return {
+    id: row.id,
+    sourceUrl: row.sourceUrl,
+    parsedTitle: row.parsedTitle,
+    parsedCompany: row.parsedCompany,
+    parsedLocation: row.parsedLocation,
+    parsedDescription: row.parsedDescription,
+    parsedRequirements: (row.parsedRequirements as string[] | null) ?? null,
+    parsedJson: (row.parsedJson as ParsedJob | null) ?? null,
+    createdAt: row.createdAt,
+    hasTailoring: row.hasTailoring,
+  };
+}
 
 /** One row per saved job posting for the sidebar's tailoring history. */
 export async function getJobSummaries(userId: string): Promise<JobSummary[]> {
@@ -205,14 +252,15 @@ export async function getJobSummaries(userId: string): Promise<JobSummary[]> {
       parsedLocation: true,
       parsedDescription: true,
       parsedRequirements: true,
+      parsedJson: true,
       createdAt: true,
       tailoring: { select: { id: true } },
     },
   });
 
-  return rows.map(({ tailoring, ...row }) => ({
-    ...row,
-    parsedRequirements: (row.parsedRequirements as string[] | null) ?? null,
-    hasTailoring: tailoring !== null,
-  }));
+  return rows.map(({ tailoring, ...row }) =>
+    jobPayload({ ...row, hasTailoring: tailoring !== null })
+  );
 }
+
+export { jobPayload };
