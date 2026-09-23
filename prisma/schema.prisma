@@ -50,6 +50,8 @@ model Cv {
   parsedYears    Int?
   parsedSkills   Json?
   parsedRoles    Json?
+  /** Full structured resume JSON (skills, roles, education, projects, other, …). */
+  parsedJson     Json?
   createdAt      DateTime @default(now())
 
   @@unique([userId, fileHash])
@@ -68,6 +70,8 @@ model JobPost {
   parsedLocation     String?
   parsedDescription  String?    @db.Text
   parsedRequirements Json?
+  /** Full structured job JSON (responsibilities, requirements, skills, other, …). */
+  parsedJson         Json?
   createdAt          DateTime   @default(now())
   tailoring          Tailoring?
 
