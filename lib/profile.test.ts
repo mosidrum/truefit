@@ -19,9 +19,13 @@ describe("buildProfileFromCvs", () => {
     const profile = await buildProfileFromCvs("user-1");
 
     expect(profile).toEqual({
-      identity: { headline: "", tags: [] },
+      identity: { headline: "", tags: [], location: null },
       roles: [],
       skills: [],
+      education: [],
+      certifications: [],
+      projects: [],
+      other: [],
       completion: 0,
       gapNote: "Upload a CV to start building your record.",
       years: null,
@@ -44,13 +48,18 @@ describe("buildProfileFromCvs", () => {
             bullets: ["Shipped a feature used by 10k users."],
           },
         ],
+        parsedJson: null,
       },
     ]);
 
     const profile = await buildProfileFromCvs("user-1");
 
     expect(profile.completion).toBe(100);
-    expect(profile.identity).toEqual({ headline: "Senior Engineer", tags: ["6 yrs experience", "Remote"] });
+    expect(profile.identity).toEqual({
+      headline: "Senior Engineer",
+      tags: ["6 yrs experience", "Remote"],
+      location: "Remote",
+    });
     expect(profile.years).toBe(6);
     expect(profile.roles).toHaveLength(1);
     expect(profile.roles[0].flag).toBe("complete");
@@ -167,5 +176,67 @@ describe("buildProfileFromCvs", () => {
     expect(react?.evidenceCount).toBe(2);
     // "Go" must not whole-word-match inside "Golang".
     expect(go?.evidenceCount).toBe(0);
+  });
+
+  it("merges education/certifications/projects/other from parsedJson across CVs", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        fileName: "resume-a.pdf",
+        parsedHeadline: "Engineer",
+        parsedLocation: null,
+        parsedYears: 3,
+        parsedSkills: ["React"],
+        parsedRoles: [],
+        parsedJson: {
+          headline: "Engineer",
+          location: null,
+          yearsOfExperience: 3,
+          skills: ["React"],
+          roles: [],
+          education: [{ degree: "BS CS", institution: "State U", dates: "2018" }],
+          certifications: ["AWS SAA"],
+          projects: [{ name: "Side App", description: "Demo", bullets: ["Shipped"] }],
+          other: [{ key: "Languages", value: "English" }],
+        },
+      },
+      {
+        fileName: "resume-b.pdf",
+        parsedHeadline: null,
+        parsedLocation: null,
+        parsedYears: null,
+        parsedSkills: null,
+        parsedRoles: null,
+        parsedJson: {
+          headline: null,
+          location: null,
+          yearsOfExperience: null,
+          skills: [],
+          roles: [],
+          education: [],
+          certifications: ["AWS SAA", "CKA"],
+          projects: [],
+          other: [
+            { key: "Languages", value: "French" },
+            { key: "Clearance", value: "Secret" },
+          ],
+        },
+      },
+    ]);
+
+    const profile = await buildProfileFromCvs("user-1");
+
+    expect(profile.education).toEqual([
+      { degree: "BS CS", institution: "State U", dates: "2018" },
+    ]);
+    expect(profile.certifications).toEqual(["AWS SAA", "CKA"]);
+    expect(profile.projects).toHaveLength(1);
+    expect(profile.other).toEqual(
+      expect.arrayContaining([
+        { key: "Languages", value: expect.stringContaining("English") },
+        { key: "Clearance", value: "Secret" },
+      ])
+    );
+    const languages = profile.other.find((entry) => entry.key === "Languages");
+    expect(languages?.value).toContain("French");
   });
 });
