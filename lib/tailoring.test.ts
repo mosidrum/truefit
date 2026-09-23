@@ -21,16 +21,20 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/lib/cvs", () => ({ getCvRawTextsForUser: getCvRawTextsForUserMock }));
 vi.mock("@/lib/jobs", () => ({ getJobPostForTailoring: getJobPostForTailoringMock }));
 vi.mock("@/lib/profile", () => ({ buildProfileFromCvs: buildProfileFromCvsMock }));
-vi.mock("@/lib/openai", () => ({
-  generateTailoring: generateTailoringMock,
-  scoreAtsSubcriteria: scoreAtsSubcriteriaMock,
-  OPENAI_MODEL: "gpt-4o-mini",
-}));
+vi.mock("@/lib/openai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/openai")>();
+  return {
+    ...actual,
+    generateTailoring: generateTailoringMock,
+    scoreAtsSubcriteria: scoreAtsSubcriteriaMock,
+    OPENAI_MODEL: "gpt-4o-mini",
+  };
+});
 
 const { getOrGenerateTailoring } = await import("@/lib/tailoring");
 
 const PROFILE = {
-  identity: { headline: "Senior Engineer", tags: [] },
+  identity: { headline: "Senior Engineer", tags: [], location: null },
   roles: [
     {
       title: "Engineer",
@@ -41,6 +45,10 @@ const PROFILE = {
     },
   ],
   skills: [{ label: "React", evidenceCount: 1 }],
+  education: [],
+  certifications: [],
+  projects: [],
+  other: [],
   completion: 100,
   gapNote: "",
   years: 5,
@@ -55,6 +63,21 @@ const JOB = {
   parsedLocation: "Remote",
   parsedDescription: "Build React applications.",
   parsedRequirements: ["React"],
+  parsedJson: {
+    title: "Senior Frontend Engineer",
+    company: "Globex",
+    location: "Remote",
+    employmentType: "Full-time",
+    seniority: "Senior",
+    salary: null,
+    summary: "Build React applications.",
+    responsibilities: ["Build React applications"],
+    requirements: { required: ["React"], preferred: [] },
+    skills: ["React"],
+    benefits: [],
+    domain: [],
+    other: [],
+  },
   rawText: "Full job posting text.",
 };
 

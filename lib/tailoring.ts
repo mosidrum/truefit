@@ -6,6 +6,7 @@ import {
   generateTailoring,
   scoreAtsSubcriteria,
   OPENAI_MODEL,
+  type ParsedJob,
   type TailoredCv,
   type WhatChangedItem,
 } from "@/lib/openai";
@@ -93,7 +94,60 @@ type JobForTailoring = AtsJobInput & {
   rawText: string;
 };
 
+function asStructuredJob(value: unknown): ParsedJob | null {
+  if (!value || typeof value !== "object") return null;
+  const job = value as ParsedJob;
+  if (!job.requirements || !Array.isArray(job.responsibilities)) return null;
+  return job;
+}
+
 function buildJobText(job: JobForTailoring): string {
+  const structured = asStructuredJob(job.parsedJson);
+  if (structured) {
+    const reqRequired = structured.requirements.required;
+    const reqPreferred = structured.requirements.preferred;
+    const otherLines =
+      structured.other.length > 0
+        ? structured.other.map((entry) => `- ${entry.key}: ${entry.value}`).join("\n")
+        : "- None";
+
+    return (
+      "JOB POSTING (structured JSON extract — prefer this over raw text)\n" +
+      `Title: ${structured.title ?? "Unknown"}\n` +
+      `Company: ${structured.company ?? "Unknown"}\n` +
+      `Location: ${structured.location ?? "Unknown"}\n` +
+      `Employment type: ${structured.employmentType ?? "Not stated"}\n` +
+      `Seniority: ${structured.seniority ?? "Not stated"}\n` +
+      `Salary: ${structured.salary ?? "Not stated"}\n` +
+      `Summary: ${structured.summary ?? "Not available"}\n` +
+      `Domain: ${structured.domain.length > 0 ? structured.domain.join(", ") : "Not stated"}\n` +
+      "Responsibilities:\n" +
+      (structured.responsibilities.length > 0
+        ? structured.responsibilities.map((item) => `- ${item}`).join("\n")
+        : "- Not available") +
+      "\nRequired qualifications:\n" +
+      (reqRequired.length > 0
+        ? reqRequired.map((item) => `- ${item}`).join("\n")
+        : "- Not available") +
+      "\nPreferred qualifications:\n" +
+      (reqPreferred.length > 0
+        ? reqPreferred.map((item) => `- ${item}`).join("\n")
+        : "- Not available") +
+      "\nSkills / tools:\n" +
+      (structured.skills.length > 0
+        ? structured.skills.map((item) => `- ${item}`).join("\n")
+        : "- Not available") +
+      "\nBenefits:\n" +
+      (structured.benefits.length > 0
+        ? structured.benefits.map((item) => `- ${item}`).join("\n")
+        : "- Not available") +
+      "\nOther details:\n" +
+      otherLines +
+      "\n\nRaw source text (may contain site boilerplate; use only for extra context the structured extract may have missed):\n" +
+      job.rawText.slice(0, JOB_RAW_TEXT_CAP)
+    );
+  }
+
   const requirements = (job.parsedRequirements as string[] | null) ?? [];
   return (
     "JOB POSTING\n" +
@@ -130,7 +184,7 @@ function buildCandidateText(
     "the tailored CV. Facts stay fixed (employers, titles, dates, real metrics/skills); every " +
     "experience and every achievement under it must be rewritten and reoriented so this specific " +
     "job ranks as a fit. Two different jobs never share the same experience/achievement wording.\n\n" +
-    "Aggregated profile summary (structured pool signal — evidence-counted skills, deduped roles):\n" +
+    "Aggregated profile JSON (structured pool signal — skills, roles, education, projects, other):\n" +
     profileSummary +
     "\n\nRaw CV documents (verbatim extracted text — pool evidence to search and transform; richer " +
     "than the summary above, still never copy-paste into the output):\n" +

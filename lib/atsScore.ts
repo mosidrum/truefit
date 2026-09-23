@@ -1,6 +1,11 @@
 import type { AggregatedProfile } from "@/lib/profile";
 import type { CvRawText } from "@/lib/cvs";
-import type { AtsSubscores, TailoredCv } from "@/lib/openai";
+import {
+  jobMatchPhrases,
+  type AtsSubscores,
+  type ParsedJob,
+  type TailoredCv,
+} from "@/lib/openai";
 
 /**
  * Deterministic weighted ATS scoring engine. Implements the 9-criterion
@@ -58,7 +63,45 @@ export type AtsJobInput = {
   parsedTitle: string | null;
   parsedDescription: string | null;
   parsedRequirements: unknown;
+  /** Full structured job JSON when available (preferred over flat columns). */
+  parsedJson?: unknown;
 };
+
+function asParsedJob(value: unknown): ParsedJob | null {
+  if (!value || typeof value !== "object") return null;
+  const job = value as ParsedJob;
+  if (!job.requirements || !Array.isArray(job.responsibilities)) return null;
+  return job;
+}
+
+/** Flat requirement strings from structured JSON or legacy `parsedRequirements`. */
+export function jobRequirementStrings(job: AtsJobInput): string[] {
+  const structured = asParsedJob(job.parsedJson);
+  if (structured) {
+    return [
+      ...structured.skills,
+      ...structured.requirements.required,
+      ...structured.requirements.preferred,
+    ].filter((item) => item.trim().length > 0);
+  }
+  return ((job.parsedRequirements as string[] | null) ?? []).filter(
+    (req) => typeof req === "string" && req.trim().length > 0
+  );
+}
+
+/** Match phrases: responsibilities + skills + requirements + domain (structured), else legacy tokens. */
+export function jobPhrasesForMatch(job: AtsJobInput): string[] {
+  const structured = asParsedJob(job.parsedJson);
+  if (structured) return jobMatchPhrases(structured);
+
+  const requirements = jobRequirementStrings(job);
+  const jobKeywordSource = [
+    job.parsedTitle ?? "",
+    job.parsedDescription ?? "",
+    ...requirements,
+  ].join(" ");
+  return [...new Set(tokenize(jobKeywordSource))];
+}
 
 const CRITERION_LABELS: Record<AtsCriterionKey, string> = {
   keywordMatch: "Keyword Match",
@@ -141,11 +184,31 @@ function tokenize(text: string): string[] {
 
 // ── Subject material adapters ───────────────────────────────────────────
 
-/** Pre-tailoring: the candidate's real, untailored material. */
+/** Pre-tailoring: the candidate's real, untailored material from the profile JSON. */
 export function materialFromProfile(
   profile: AggregatedProfile,
   cvRawTexts: CvRawText[]
 ): AtsSubjectMaterial {
+  const structuredBits = [
+    profile.identity.headline,
+    ...profile.skills.map((skill) => skill.label),
+    ...profile.roles.flatMap((role) => [
+      role.title,
+      role.company,
+      ...role.bullets.map((b) => b.text),
+    ]),
+    ...profile.education.map(
+      (edu) => `${edu.degree} ${edu.institution} ${edu.dates}`
+    ),
+    ...profile.certifications,
+    ...profile.projects.flatMap((project) => [
+      project.name,
+      project.description,
+      ...project.bullets,
+    ]),
+    ...profile.other.map((entry) => `${entry.key}: ${entry.value}`),
+  ].join("\n");
+
   return {
     headline: profile.identity.headline,
     roleTitles: profile.roles.map((role) => role.title),
@@ -153,7 +216,7 @@ export function materialFromProfile(
     roleBullets: profile.roles.flatMap((role) => role.bullets.map((bullet) => bullet.text)),
     roleDates: profile.roles.map((role) => role.dates),
     years: profile.years,
-    rawText: cvRawTexts.map((cv) => cv.extractedText).join("\n\n"),
+    rawText: [structuredBits, ...cvRawTexts.map((cv) => cv.extractedText)].join("\n\n"),
   };
 }
 
@@ -205,27 +268,34 @@ const SECTION_HEADING_PATTERNS: Record<string, RegExp> = {
   Summary: /\b(summary|profile|objective)\b/i,
 };
 
+/** Experience + skills text used when matching job responsibilities/phrases. */
+function materialMatchHaystack(material: AtsSubjectMaterial): string {
+  return [material.rawText, ...material.roleBullets, ...material.skills, material.headline].join(
+    "\n"
+  );
+}
+
 /** The 6 criteria computed purely from text/structured-data heuristics — same input, same score, every time. */
 export function computeDeterministicCriteria(
   material: AtsSubjectMaterial,
   job: AtsJobInput
 ): AtsCriterionScore[] {
-  const requirements = ((job.parsedRequirements as string[] | null) ?? []).filter(
-    (req) => typeof req === "string" && req.trim().length > 0
-  );
-  const jobKeywordSource = [job.parsedTitle ?? "", job.parsedDescription ?? "", ...requirements].join(" ");
-  const jobTokens = [...new Set(tokenize(jobKeywordSource))];
+  const structured = asParsedJob(job.parsedJson);
+  const requirements = jobRequirementStrings(job);
+  const matchPhrases = jobPhrasesForMatch(job);
+  const haystack = materialMatchHaystack(material);
 
-  const matchedTokens = jobTokens.filter((token) => wholeWordIncludes(material.rawText, token));
+  const matchedPhrases = matchPhrases.filter((phrase) => wholeWordIncludes(haystack, phrase));
   const keywordMatch = makeCriterion(
     "keywordMatch",
-    jobTokens.length > 0 ? scoreFromRatio(matchedTokens.length / jobTokens.length) : 3,
-    jobTokens.length > 0
-      ? `${matchedTokens.length}/${jobTokens.length} job keywords found in the CV text.`
+    matchPhrases.length > 0 ? scoreFromRatio(matchedPhrases.length / matchPhrases.length) : 3,
+    matchPhrases.length > 0
+      ? `${matchedPhrases.length}/${matchPhrases.length} job phrases (skills/responsibilities/requirements) found in the profile.`
       : "No job keywords available to check."
   );
 
-  const jobTitleTokens = new Set(tokenize(job.parsedTitle ?? ""));
+  const jobTitle = structured?.title ?? job.parsedTitle;
+  const jobTitleTokens = new Set(tokenize(jobTitle ?? ""));
   let bestTitleRatio = 0;
   for (const candidateTitle of [...material.roleTitles, material.headline]) {
     const candidateTokens = new Set(tokenize(candidateTitle));
@@ -238,20 +308,23 @@ export function computeDeterministicCriteria(
     "jobTitleAlignment",
     jobTitleTokens.size > 0 ? scoreFromRatio(bestTitleRatio) : 3,
     jobTitleTokens.size > 0
-      ? `Best title overlap with "${job.parsedTitle}" is ${Math.round(bestTitleRatio * 100)}%.`
+      ? `Best title overlap with "${jobTitle}" is ${Math.round(bestTitleRatio * 100)}%.`
       : "No job title available to check."
   );
 
-  const coveredRequirements = requirements.filter((requirement) =>
+  const skillTargets = structured
+    ? [...structured.skills, ...structured.requirements.required].filter((s) => s.trim())
+    : requirements;
+  const coveredRequirements = skillTargets.filter((requirement) =>
     material.skills.some(
       (skill) => wholeWordIncludes(requirement, skill) || wholeWordIncludes(skill, requirement)
     )
   );
   const requiredSkillsCoverage = makeCriterion(
     "requiredSkillsCoverage",
-    requirements.length > 0 ? scoreFromRatio(coveredRequirements.length / requirements.length) : 3,
-    requirements.length > 0
-      ? `${coveredRequirements.length}/${requirements.length} listed requirements match a candidate skill.`
+    skillTargets.length > 0 ? scoreFromRatio(coveredRequirements.length / skillTargets.length) : 3,
+    skillTargets.length > 0
+      ? `${coveredRequirements.length}/${skillTargets.length} listed requirements match a candidate skill.`
       : "No requirements listed to check."
   );
 
@@ -265,7 +338,13 @@ export function computeDeterministicCriteria(
       (foundHeadings.length > 0 ? ` (${foundHeadings.map(([name]) => name).join(", ")}).` : ".")
   );
 
-  const requiredYearsMatch = jobKeywordSource.match(/(\d{1,2})\+?\s*years?/i);
+  const yearsSource = [
+    jobTitle ?? "",
+    structured?.summary ?? job.parsedDescription ?? "",
+    ...requirements,
+    ...(structured?.other.map((entry) => `${entry.key} ${entry.value}`) ?? []),
+  ].join(" ");
+  const requiredYearsMatch = yearsSource.match(/(\d{1,2})\+?\s*years?/i);
   const requiredYears = requiredYearsMatch ? Number(requiredYearsMatch[1]) : null;
   const depthOk =
     material.years != null && (requiredYears == null || material.years >= requiredYears);

@@ -116,9 +116,10 @@ score, every time):
 **Question:** *Do the important words from the job posting actually appear
 in the CV?*
 
-How it works: tokenize the job title + description + requirements, then
-count how many of those tokens show up as whole words in the CV text.
-Ratio → 0–3.
+How it works: take structured job phrases (skills, responsibilities, required/preferred
+requirements, domain) from `parsedJson` when present; otherwise tokenize the legacy
+title + description + requirements. Count how many of those phrases show up as whole
+words in the profile/CV text. Ratio → 0–3.
 
 ### 2. Job Title Alignment (weight ×3) — code
 
@@ -133,8 +134,9 @@ tokens in the candidate's role titles / headline. Best overlap → 0–3.
 **Question:** *Of the skills/requirements the job listed, how many does the
 candidate's skills list actually cover?*
 
-How it works: for each listed requirement, check whether a candidate skill
-matches it (whole-word either direction). Coverage ratio → 0–3.
+How it works: for each listed skill/required qualification (from `parsedJson`
+when present), check whether a candidate skill matches it (whole-word either
+direction). Coverage ratio → 0–3.
 
 ### 4. Formatting Cleanliness (weight ×2) — AI rubric
 

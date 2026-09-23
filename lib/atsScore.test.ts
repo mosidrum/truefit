@@ -82,6 +82,40 @@ describe("computeDeterministicCriteria", () => {
     expect(byKey(criteria, "keywordMatch").score).toBe(3);
   });
 
+  it("scores keyword match from structured job JSON phrases against profile text", () => {
+    const job: AtsJobInput = {
+      parsedTitle: "Frontend Engineer",
+      parsedDescription: null,
+      parsedRequirements: null,
+      parsedJson: {
+        title: "Frontend Engineer",
+        company: "Acme",
+        location: "Remote",
+        employmentType: "Full-time",
+        seniority: "Mid",
+        salary: null,
+        summary: "Build product UI.",
+        responsibilities: ["Own the checkout experience", "Mentor junior engineers"],
+        requirements: { required: ["React"], preferred: ["GraphQL"] },
+        skills: ["React", "TypeScript"],
+        benefits: [],
+        domain: ["e-commerce"],
+        other: [],
+      },
+    };
+    const material: AtsSubjectMaterial = {
+      ...EMPTY_MATERIAL,
+      skills: ["React", "TypeScript"],
+      roleBullets: ["Owned the checkout experience end-to-end."],
+      rawText: "React TypeScript checkout",
+    };
+
+    const criteria = computeDeterministicCriteria(material, job);
+    const keywordMatch = byKey(criteria, "keywordMatch");
+    expect(keywordMatch.score).toBeGreaterThan(0);
+    expect(byKey(criteria, "requiredSkillsCoverage").score).toBeGreaterThan(0);
+  });
+
   it("scores job title alignment via word overlap, not exact match", () => {
     const job: AtsJobInput = { ...EMPTY_JOB, parsedTitle: "Senior Frontend Engineer" };
     const material: AtsSubjectMaterial = { ...EMPTY_MATERIAL, roleTitles: ["Frontend Engineer"] };
@@ -275,7 +309,7 @@ describe("buildWeakPointsPrompt", () => {
 describe("materialFromProfile", () => {
   it("normalizes an AggregatedProfile + raw CV texts into subject material", () => {
     const profile: AggregatedProfile = {
-      identity: { headline: "Senior Engineer", tags: [] },
+      identity: { headline: "Senior Engineer", tags: [], location: null },
       roles: [
         {
           title: "Engineer",
@@ -286,6 +320,10 @@ describe("materialFromProfile", () => {
         },
       ],
       skills: [{ label: "React", evidenceCount: 1 }],
+      education: [],
+      certifications: [],
+      projects: [],
+      other: [],
       completion: 100,
       gapNote: "",
       years: 5,
